@@ -242,7 +242,8 @@ router.post('/', (req, res) => {
     totalGrossWeight = Math.round(totalGrossWeight * 100) / 100;
     totalWasteWeight = Math.round(totalWasteWeight * 100) / 100;
     totalNetWeight = Math.round(totalNetWeight * 100) / 100;
-    grandTotal = Math.round(grandTotal * 100) / 100;
+    // Wholesale rounding rule: round down to whole integer rupee (e.g. 200.40 -> 200, 200.80 -> 200)
+    grandTotal = Math.floor(grandTotal);
 
     // Update walkin total_spent if temp_walkin_id exists
     if (finalTempWalkinId) {

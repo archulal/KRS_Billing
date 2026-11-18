@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { 
   Plus, Trash2, Printer, RotateCcw, User, Search, Store, 
-  HelpCircle, AlertCircle, CheckCircle2, ChevronDown, Sparkles
+  HelpCircle, AlertCircle, CheckCircle2, ChevronDown, Sparkles, Edit
 } from 'lucide-react';
 import WalkInCaptureModal from './WalkInCaptureModal';
 
@@ -11,7 +11,8 @@ export default function BillingScreen({
   permanentCustomers, 
   onBillCreated, 
   refreshStats,
-  onOpenCustomerDirectory
+  onOpenCustomerDirectory,
+  onRefreshCustomers
 }) {
   const { lang, t, getVarietyName } = useLanguage();
 
@@ -20,6 +21,51 @@ export default function BillingScreen({
   const [selectedPermanentCustomer, setSelectedPermanentCustomer] = useState(null);
   const [customerSearchQuery, setCustomerSearchQuery] = useState('');
   const [isCustomerDropdownOpen, setIsCustomerDropdownOpen] = useState(false);
+
+  // Edit Selected Customer modal state
+  const [isEditCustomerOpen, setIsEditCustomerOpen] = useState(false);
+  const [editCustName, setEditCustName] = useState('');
+  const [editCustShop, setEditCustShop] = useState('');
+  const [editCustPhone, setEditCustPhone] = useState('');
+  const [editCustAddress, setEditCustAddress] = useState('');
+  const [isSavingCustomer, setIsSavingCustomer] = useState(false);
+
+  const handleOpenEditCustomer = () => {
+    if (!selectedPermanentCustomer) return;
+    setEditCustName(selectedPermanentCustomer.name || '');
+    setEditCustShop(selectedPermanentCustomer.shop_name || '');
+    setEditCustPhone(selectedPermanentCustomer.phone || '');
+    setEditCustAddress(selectedPermanentCustomer.address || '');
+    setIsEditCustomerOpen(true);
+  };
+
+  const handleSaveCustomer = async (e) => {
+    e.preventDefault();
+    if (!selectedPermanentCustomer || !editCustName.trim()) return;
+    setIsSavingCustomer(true);
+    try {
+      const res = await fetch(`/api/customers/${selectedPermanentCustomer.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editCustName.trim(),
+          shop_name: editCustShop.trim(),
+          phone: editCustPhone.trim(),
+          address: editCustAddress.trim(),
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to update customer');
+      const updated = await res.json();
+      setSelectedPermanentCustomer(updated);
+      setIsEditCustomerOpen(false);
+      if (onRefreshCustomers) onRefreshCustomers();
+    } catch (err) {
+      console.error(err);
+      setErrorMessage(err.message);
+    } finally {
+      setIsSavingCustomer(false);
+    }
+  };
 
   // Billing line items
   const createEmptyRow = (defaultVariety = null) => {
@@ -146,16 +192,17 @@ export default function BillingScreen({
       acc.gross += parseFloat(row.gross_weight_kg) || 0;
       acc.waste += parseFloat(row.total_waste_kg) || 0;
       acc.net += parseFloat(row.net_weight_kg) || 0;
-      acc.grandTotal += parseFloat(row.subtotal) || 0;
+      acc.rawTotal += parseFloat(row.subtotal) || 0;
       return acc;
     },
-    { bunches: 0, gross: 0, waste: 0, net: 0, grandTotal: 0 }
+    { bunches: 0, gross: 0, waste: 0, net: 0, rawTotal: 0, grandTotal: 0 }
   );
 
   billSummary.gross = Math.round(billSummary.gross * 100) / 100;
   billSummary.waste = Math.round(billSummary.waste * 100) / 100;
   billSummary.net = Math.round(billSummary.net * 100) / 100;
-  billSummary.grandTotal = Math.round(billSummary.grandTotal * 100) / 100;
+  // Wholesale mandi rounding rule: round down to whole integer rupee (e.g. 200.40 -> 200, 200.80 -> 200)
+  billSummary.grandTotal = Math.floor(billSummary.rawTotal);
 
   // Filtered permanent customers for autocomplete
   const filteredCustomers = permanentCustomers.filter((c) => {
@@ -336,16 +383,27 @@ export default function BillingScreen({
                     </div>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedPermanentCustomer(null);
-                    setCustomerSearchQuery('');
-                  }}
-                  className="px-2.5 py-1 text-xs font-bold text-[#156b46] hover:bg-emerald-100 rounded-lg transition-all"
-                >
-                  {t('changeCustomer')}
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleOpenEditCustomer}
+                    className="px-2.5 py-1 text-xs font-bold text-amber-800 hover:bg-amber-100 rounded-lg transition-all flex items-center gap-1"
+                    title={t('editCustomer')}
+                  >
+                    <Edit className="w-3.5 h-3.5 text-amber-700" />
+                    <span>{t('editCustomer')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedPermanentCustomer(null);
+                      setCustomerSearchQuery('');
+                    }}
+                    className="px-2.5 py-1 text-xs font-bold text-[#156b46] hover:bg-emerald-100 rounded-lg transition-all"
+                  >
+                    {t('changeCustomer')}
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="relative">
@@ -512,27 +570,34 @@ export default function BillingScreen({
                       )}
                     </td>
 
-                    {/* Bunches (Quantity) */}
+                    {/* Bunches (Quantity) - Integer only, no up/down arrows */}
                     <td className="py-2.5 px-3">
                       <input
-                        type="number"
-                        min="1"
-                        step="1"
+                        type="text"
+                        inputMode="numeric"
                         value={row.bunch_quantity}
-                        onChange={(e) => handleRowChange(index, 'bunch_quantity', e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9]/g, '');
+                          handleRowChange(index, 'bunch_quantity', val);
+                        }}
                         className="w-full text-center px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-900"
                       />
                     </td>
 
-                    {/* Gross Weight (kg) */}
+                    {/* Gross Weight (kg) - Decimal text box, no spinner arrows */}
                     <td className="py-2.5 px-3">
                       <div className="relative">
                         <input
-                          type="number"
-                          step="0.01"
+                          type="text"
+                          inputMode="decimal"
                           placeholder="0.00"
                           value={row.gross_weight_kg}
-                          onChange={(e) => handleRowChange(index, 'gross_weight_kg', e.target.value)}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                              handleRowChange(index, 'gross_weight_kg', val);
+                            }
+                          }}
                           className="w-full text-right pr-6 pl-2 py-1.5 bg-emerald-50/30 border border-emerald-300 rounded-lg text-xs font-bold text-slate-900 focus:bg-white"
                         />
                         <span className="absolute right-2 top-2 text-[10px] text-slate-400 pointer-events-none">
@@ -541,15 +606,21 @@ export default function BillingScreen({
                       </div>
                     </td>
 
-                    {/* Waste per Bunch (kg) - Editable per row */}
+                    {/* Waste per Bunch (kg) - Decimal text box, editable per row */}
                     <td className="py-2.5 px-3">
                       <div className="relative">
                         <input
-                          type="number"
-                          step="0.01"
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="0.00"
                           value={row.waste_per_bunch_kg}
-                          onChange={(e) => handleRowChange(index, 'waste_per_bunch_kg', e.target.value)}
-                          className="w-full text-right pr-6 pl-2 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium text-slate-700"
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                              handleRowChange(index, 'waste_per_bunch_kg', val);
+                            }
+                          }}
+                          className="w-full text-right pr-6 pl-2 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium text-slate-700 focus:bg-white"
                         />
                         <span className="absolute right-2 top-2 text-[10px] text-slate-400 pointer-events-none">
                           kg
@@ -571,17 +642,23 @@ export default function BillingScreen({
                       </span>
                     </td>
 
-                    {/* Rate per kg (₹) - Immediately editable */}
+                    {/* Rate per kg (₹) - Decimal text box, immediately editable */}
                     <td className="py-2.5 px-3">
                       <div className="relative">
                         <span className="absolute left-2 top-2 text-xs font-bold text-[#156b46] pointer-events-none">
                           ₹
                         </span>
                         <input
-                          type="number"
-                          step="0.5"
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="0.00"
                           value={row.rate_per_kg}
-                          onChange={(e) => handleRowChange(index, 'rate_per_kg', e.target.value)}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                              handleRowChange(index, 'rate_per_kg', val);
+                            }
+                          }}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' && index === items.length - 1) {
                               handleAddRow();
@@ -676,7 +753,7 @@ export default function BillingScreen({
               {t('grandTotal')}
             </span>
             <span className="text-2xl font-black tracking-tight text-slate-900">
-              ₹{billSummary.grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ₹{billSummary.grandTotal.toLocaleString('en-IN')}
             </span>
           </div>
 
@@ -716,6 +793,96 @@ export default function BillingScreen({
         }}
         grandTotal={billSummary.grandTotal}
       />
+
+      {/* Edit Selected Permanent Customer Modal */}
+      {isEditCustomerOpen && selectedPermanentCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="bg-[#156b46] px-6 py-4 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Edit className="w-5 h-5 text-white" />
+                <h3 className="font-bold text-base">{t('editCustomer')}</h3>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setIsEditCustomerOpen(false)}
+                className="text-white/80 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCustomer} className="p-6 space-y-3.5">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  {t('customerName')} *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editCustName}
+                  onChange={(e) => setEditCustName(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  {t('shopName')}
+                </label>
+                <input
+                  type="text"
+                  value={editCustShop}
+                  onChange={(e) => setEditCustShop(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  {t('phone')}
+                </label>
+                <input
+                  type="tel"
+                  value={editCustPhone}
+                  onChange={(e) => setEditCustPhone(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  {t('address')}
+                </label>
+                <textarea
+                  rows={2}
+                  value={editCustAddress}
+                  onChange={(e) => setEditCustAddress(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:bg-white"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditCustomerOpen(false)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingCustomer}
+                  className="px-5 py-2 bg-[#156b46] hover:bg-[#125839] text-white text-xs font-bold rounded-xl shadow transition-all flex items-center gap-1.5"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>{isSavingCustomer ? t('saving') : t('updateCustomer')}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

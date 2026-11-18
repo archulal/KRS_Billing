@@ -78,6 +78,10 @@ export const translations = {
     noCustomersFound: "No customers found.",
     noWalkinsFound: "No temporary walk-in records recorded yet.",
     promoteSuccess: "Customer promoted successfully to permanent list!",
+    editCustomer: "Edit Customer",
+    updateCustomer: "Update Details",
+    deleteCustomer: "Delete Customer",
+    customerUpdated: "Customer details updated successfully!",
     
     // Banana Varieties Management
     varietiesTitle: "Kerala Banana Varieties Configuration",
@@ -211,6 +215,10 @@ export const translations = {
     noCustomersFound: "കസ്റ്റമേഴ്സിനെ കണ്ടെത്തിയില്ല.",
     noWalkinsFound: "നടപ്പു കസ്റ്റമർ വിവരങ്ങൾ ലഭ്യമല്ല.",
     promoteSuccess: "കസ്റ്റമറെ സ്ഥിരം കസ്റ്റമർ ലിസ്റ്റിലേക്ക് വിജയകരമായി മാറ്റി!",
+    editCustomer: "കസ്റ്റമർ വിവരങ്ങൾ തിരുത്തുക",
+    updateCustomer: "വിവരങ്ങൾ പുതുക്കുക",
+    deleteCustomer: "കസ്റ്റമറെ നീക്കം ചെയ്യുക",
+    customerUpdated: "കസ്റ്റമർ വിവരങ്ങൾ വിജയകരമായി പുതുക്കി!",
     
     // Banana Varieties Management
     varietiesTitle: "കേരള വാഴപ്പഴ ഇനങ്ങളുടെ വിവരങ്ങൾ",

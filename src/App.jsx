@@ -123,6 +123,10 @@ export default function App() {
             onBillCreated={handleBillCreated}
             refreshStats={fetchStats}
             onOpenCustomerDirectory={() => setActiveTab('customers')}
+            onRefreshCustomers={() => {
+              fetchPermanentCustomers();
+              fetchWalkinCount();
+            }}
           />
         )}
 

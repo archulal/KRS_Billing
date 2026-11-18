@@ -25,6 +25,15 @@ export default function CustomersScreen({
   const [formPhone, setFormPhone] = useState('');
   const [formAddress, setFormAddress] = useState('');
 
+  // Form state for editing permanent customer
+  const [editingCustomer, setEditingCustomer] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editShop, setEditShop] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editAddress, setEditAddress] = useState('');
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
   // Fetch walk-in staging list
   const fetchWalkins = async () => {
     setIsLoadingWalkins(true);
@@ -95,6 +104,66 @@ export default function CustomersScreen({
       setFormPhone('');
       setFormAddress('');
       setIsAddModalOpen(false);
+      if (onRefreshCustomers) onRefreshCustomers();
+    } catch (err) {
+      console.error(err);
+      showNotification(err.message, 'error');
+    }
+  };
+
+  // Open edit modal pre-filled with customer details
+  const handleOpenEdit = (customer) => {
+    setEditingCustomer(customer);
+    setEditName(customer.name || '');
+    setEditShop(customer.shop_name || '');
+    setEditPhone(customer.phone || '');
+    setEditAddress(customer.address || '');
+    setIsEditModalOpen(true);
+  };
+
+  // Save updated customer details
+  const handleSaveEdit = async (e) => {
+    e.preventDefault();
+    if (!editingCustomer || !editName.trim()) return;
+
+    setIsSavingEdit(true);
+    try {
+      const res = await fetch(`/api/customers/${editingCustomer.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editName.trim(),
+          shop_name: editShop.trim(),
+          phone: editPhone.trim(),
+          address: editAddress.trim(),
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to update customer');
+      }
+
+      showNotification(t('customerUpdated'), 'success');
+      setIsEditModalOpen(false);
+      setEditingCustomer(null);
+      if (onRefreshCustomers) onRefreshCustomers();
+    } catch (err) {
+      console.error(err);
+      showNotification(err.message, 'error');
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  // Delete customer with confirmation
+  const handleDeleteCustomer = async (id, name) => {
+    if (!window.confirm(lang === 'ml' ? `${name} എന്ന കസ്റ്റമറെ നീക്കം ചെയ്യണമെന്നുണ്ടോ?` : `Are you sure you want to delete ${name}?`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/customers/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete customer');
+      showNotification(lang === 'ml' ? 'കസ്റ്റമറെ നീക്കം ചെയ്തു' : 'Customer deleted successfully', 'success');
       if (onRefreshCustomers) onRefreshCustomers();
     } catch (err) {
       console.error(err);
@@ -223,12 +292,13 @@ export default function CustomersScreen({
                   <th className="py-3 px-4">{t('phone')}</th>
                   <th className="py-3 px-4">{t('address')}</th>
                   <th className="py-3 px-4 text-right">Registered</th>
+                  <th className="py-3 px-4 text-center w-28">{t('actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredPermanent.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-xs text-slate-500">
+                    <td colSpan={7} className="py-8 text-center text-xs text-slate-500">
                       {t('noCustomersFound')}
                     </td>
                   </tr>
@@ -278,6 +348,26 @@ export default function CustomersScreen({
                       </td>
                       <td className="py-3 px-4 text-right font-mono text-[11px] text-slate-500">
                         {cust.created_at ? new Date(cust.created_at).toLocaleDateString() : '—'}
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEdit(cust)}
+                            className="p-1.5 text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50 rounded-lg transition-all"
+                            title={t('editCustomer')}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCustomer(cust.id, cust.name)}
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                            title={t('deleteCustomer')}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -486,6 +576,106 @@ export default function CustomersScreen({
                   className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow transition-all"
                 >
                   Save Customer
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Permanent Customer Modal */}
+      {isEditModalOpen && editingCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="bg-[#156b46] px-6 py-4 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Edit className="w-5 h-5 text-white" />
+                <h3 className="font-bold text-base">{t('editCustomer')}</h3>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => {
+                  setIsEditModalOpen(false);
+                  setEditingCustomer(null);
+                }}
+                className="text-white/80 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="p-6 space-y-3.5">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  {t('customerName')} *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Ananthu K."
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  {t('shopName')}
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Ananthu Supermarket"
+                  value={editShop}
+                  onChange={(e) => setEditShop(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  {t('phone')}
+                </label>
+                <input
+                  type="tel"
+                  placeholder="e.g. 9847123456"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold focus:bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  {t('address')}
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Shop location / Market road address"
+                  value={editAddress}
+                  onChange={(e) => setEditAddress(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:bg-white"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditModalOpen(false);
+                    setEditingCustomer(null);
+                  }}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingEdit}
+                  className="px-5 py-2 bg-[#156b46] hover:bg-[#125839] text-white text-xs font-bold rounded-xl shadow transition-all flex items-center gap-1.5"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>{isSavingEdit ? t('saving') : t('updateCustomer')}</span>
                 </button>
               </div>
             </form>

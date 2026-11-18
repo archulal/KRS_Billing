@@ -37,6 +37,16 @@ input:focus, select:focus {
   @apply ring-2 ring-emerald-600 border-emerald-600 outline-none;
 }
 
+/* Remove up/down spinner arrows from number inputs */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+input[type="number"] {
+  -moz-appearance: textfield !important;
+}
+
 /* -------------------------------------------------------------
    Canon PIXMA G3000 Inkjet Optimization & Print Stylesheet
    Optimized for A4 Half Size (A5 - 148 x 210 mm) and Full A4
