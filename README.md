@@ -48,12 +48,107 @@ $$\text{Line Subtotal (₹)} = \text{Net Weight} \times \text{Editable Rate per 
 
 ---
 
-## 🐧 Ubuntu Linux Deployment
-To deploy this application on **Ubuntu Linux (20.04 / 22.04 / 24.04 LTS)**:
-- Run the automated installer:
+## 🐧 Ubuntu Linux Setup Guide (After Cloning from GitHub)
+
+Follow these steps on your Ubuntu Linux machine (Ubuntu 20.04, 22.04, or 24.04 LTS):
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/<YOUR_GITHUB_USERNAME>/<REPO_NAME>.git
+cd <REPO_NAME>
+```
+
+---
+
+### Option A: 1-Click Automated Setup (Recommended)
+We provide an automated setup script that installs all dependencies, Malayalam fonts, build tools, builds production assets, and creates an Ubuntu desktop shortcut:
+
+```bash
+chmod +x scripts/install_ubuntu.sh
+./scripts/install_ubuntu.sh
+```
+
+Once finished, launch the desktop app anytime with:
+```bash
+npm start
+```
+*(Or search **"KRS Banana Wholesale Billing"** in the Ubuntu Applications menu).*
+
+---
+
+### Option B: Manual Setup Step-by-Step
+
+#### Step 1: Install Ubuntu System Libraries & C++ Compiler
+```bash
+sudo apt update
+sudo apt install -y curl git build-essential python3 make g++ libfuse2 fonts-noto-core fonts-smc-* cups printer-driver-gutenprint
+```
+*(These packages are required to compile `better-sqlite3` native drivers and render Malayalam fonts crisply on screen and in print).*
+
+#### Step 2: Install Node.js (v20 LTS)
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+Verify versions:
+```bash
+node -v   # Should be v20.x or higher
+npm -v    # Should be 10.x or higher
+```
+
+#### Step 3: Install Project Dependencies
+```bash
+npm install
+```
+
+#### Step 4: Build Production Assets
+```bash
+npm run build:frontend
+```
+
+#### Step 5: Run the Desktop App
+```bash
+npm start
+```
+
+---
+
+### 📦 Building Ubuntu `.deb` and `.AppImage` Installers
+To generate installable Linux packages:
+```bash
+npm run build:linux
+```
+The output files will be in the `release/` folder:
+- **Install system-wide `.deb` package:**
   ```bash
-  chmod +x scripts/install_ubuntu.sh
-  ./scripts/install_ubuntu.sh
+  sudo dpkg -i release/krs-banana-wholesale-billing_1.0.0_amd64.deb
   ```
-- Or see full step-by-step instructions in [UBUNTU_DEPLOYMENT.md](file:///Users/archulal/bannana-sellling/KRS_Billing/UBUNTU_DEPLOYMENT.md) for desktop (`.deb` / `.AppImage`), Canon PIXMA G3000 printer configuration, and 24/7 background systemd service setup.
+- **Or run standalone `.AppImage`:**
+  ```bash
+  chmod +x release/*.AppImage
+  ./release/*.AppImage
+  ```
+
+---
+
+### 🌐 24/7 Web POS Server Mode (Local Shop Wi-Fi / Multi-Device Access)
+If you want to bill from counter laptops, tablets, or phones over shop Wi-Fi without running the Electron desktop window:
+```bash
+sudo cp scripts/krs-billing.service /etc/systemd/system/
+sudo nano /etc/systemd/system/krs-billing.service # update User and WorkingDirectory
+sudo systemctl daemon-reload
+sudo systemctl enable --now krs-billing
+```
+Access billing in any browser at:
+- Counter PC: `http://localhost:4567`
+- Other devices on shop Wi-Fi: `http://<UBUNTU_IP_ADDRESS>:4567`
+
+---
+
+### 🖨️ Canon PIXMA G3000 Series Printer Configuration
+1. Connect printer via USB or connect it to your shop Wi-Fi router.
+2. Open **Ubuntu Settings** → **Printers** → Click **Add Printer**.
+3. Select **Canon PIXMA G3000 series**.
+4. Set default paper size to **A5** (or A4 Half Size) in print options.
+
 
