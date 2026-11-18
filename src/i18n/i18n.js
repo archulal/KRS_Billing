@@ -140,7 +140,7 @@ export const translations = {
     // App Header & Branding
     appTitle: "കെ.ആർ.എസ് പ്ലാന്റയിൻ മർച്ചന്റ്",
     appSubtitle: "പ്ലാന്റയിൻ മർച്ചന്റ് & കമ്മീഷൻ ഏജന്റ്",
-    headerMarketLocation: "വാഴിച്ചേരി മാർക്കറ്റ്, ആലപ്പുഴ | ഫോൺ: 9447304307",
+    headerMarketLocation: "വഴിച്ചേരി മാർക്കറ്റ്, ആലപ്പുഴ | ഫോൺ: 9447304307",
     toggleLanguage: "English",
     offlineReady: "ഓഫ്‌ലൈൻ മോഡ് തയ്യാറാണ്",
     
