@@ -41,6 +41,12 @@ function createWindow() {
     mainWindow.loadURL(devUrl);
   } else {
     console.log(`[Electron] Loading embedded backend on http://127.0.0.1:${BACKEND_PORT}`);
+    mainWindow.webContents.on('did-fail-load', (event, errorCode) => {
+      console.log('[Electron] Load failed with code:', errorCode, '- Retrying in 500ms...');
+      setTimeout(() => {
+        if (mainWindow) mainWindow.loadURL(`http://127.0.0.1:${BACKEND_PORT}`);
+      }, 500);
+    });
     mainWindow.loadURL(`http://127.0.0.1:${BACKEND_PORT}`);
   }
 
