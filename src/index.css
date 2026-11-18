@@ -1,0 +1,144 @@
+@font-face {
+  font-family: 'Noto Sans Malayalam';
+  src: url('./assets/fonts/NotoSansMalayalam.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply antialiased text-slate-800 bg-slate-100 font-sans;
+  }
+}
+
+/* Custom scrollbars for clean desktop application look */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Fast Billing Input focus styles in KRS Green */
+input:focus, select:focus {
+  @apply ring-2 ring-emerald-600 border-emerald-600 outline-none;
+}
+
+/* -------------------------------------------------------------
+   Canon PIXMA G3000 Inkjet Optimization & Print Stylesheet
+   Optimized for A4 Half Size (A5 - 148 x 210 mm) and Full A4
+   ------------------------------------------------------------- */
+@page {
+  size: auto;
+  margin: 4mm 6mm;
+}
+
+@media print {
+  /* 1. Hide the entire application interface */
+  .no-print, header, nav, main, footer, .modal-backdrop {
+    display: none !important;
+  }
+
+  /* 2. Reset html & body to pure white paper */
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 10pt !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  /* 3. Strip overlay styling from invoice modal so only receipt prints */
+  .invoice-modal-container {
+    position: static !important;
+    display: block !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+  }
+
+  .invoice-modal-dialog {
+    display: block !important;
+    position: static !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+  }
+
+  .invoice-scroll-area {
+    display: block !important;
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* 4. Display the invoice receipt crisply with true dimensions */
+  .print-area {
+    display: block !important;
+    position: static !important;
+    margin: 0 auto !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: none !important;
+    overflow: visible !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .print-area.size-a5 {
+    width: 138mm !important;
+    max-width: 138mm !important;
+    padding: 2mm !important;
+  }
+
+  .print-area.size-a4 {
+    width: 196mm !important;
+    max-width: 196mm !important;
+    padding: 4mm !important;
+  }
+
+  /* 5. Inkjet ink-saver: sharp crisp black text, thin borders, no heavy dark fills */
+  .print-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+  .print-table th, .print-table td {
+    border: 1px solid #111111 !important;
+    padding: 3px 5px !important;
+    color: #000000 !important;
+    background-color: transparent !important;
+  }
+  .print-table th {
+    font-weight: 700 !important;
+    border-bottom: 2px solid #000000 !important;
+  }
+}

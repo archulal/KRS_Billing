@@ -1,0 +1,267 @@
+export const translations = {
+  en: {
+    // App Header & Branding
+    appTitle: "KRS PLANTAIN MERCHANT",
+    appSubtitle: "Plantain Merchant & Commission Agent",
+    headerMarketLocation: "Vazhichery Market, Alappuzha | Ph: 9447304307",
+    toggleLanguage: "മലയാളം",
+    offlineReady: "Offline Mode Ready",
+    
+    // Navigation
+    navBilling: "POS Billing",
+    navHistory: "Bills History",
+    navCustomers: "Customers",
+    navVarieties: "Banana Varieties",
+    
+    // Customer Section
+    customerType: "Customer Type",
+    walkInCustomer: "Walk-In Customer",
+    permanentCustomer: "Permanent Customer",
+    selectCustomerPlaceholder: "Search permanent customer (Name, Shop, Mobile)...",
+    customerName: "Customer Name",
+    shopName: "Shop Name",
+    phone: "Phone Number",
+    address: "Address",
+    walkInNotice: "Quick Walk-In mode active. Customer details can be captured during Save & Print.",
+    selectedCustomer: "Selected Customer",
+    changeCustomer: "Change",
+    
+    // Billing Table Headers
+    slNo: "Sl No",
+    variety: "Banana Variety",
+    bunches: "Bunches",
+    grossWeight: "Gross Weight (kg)",
+    wastePerBunch: "Waste / Bunch (kg)",
+    totalWaste: "Stem Waste (kg)",
+    netWeight: "Net Weight (kg)",
+    ratePerKg: "Rate / kg (₹)",
+    subtotal: "Subtotal (₹)",
+    actions: "Action",
+    
+    // Billing Form & Actions
+    addItem: "Add Line Item (Alt+A)",
+    clearBill: "Clear Bill",
+    saveAndPrint: "Save & Print Bill (F9 / Ctrl+S)",
+    saving: "Processing...",
+    billSummary: "Bill Summary",
+    itemsCount: "Total Items",
+    totalBunches: "Total Bunches",
+    totalGrossWeight: "Total Gross Weight",
+    totalStemWaste: "Total Stem Waste",
+    totalNetWeight: "Total Net Weight (Billable)",
+    grandTotal: "Grand Total",
+    
+    // Stem Waste Notes
+    stemWasteFormulaHelp: "Stem Waste = Bunches × Waste/Bunch | Net Wt = Gross - Stem Waste | Total = Net Wt × Rate",
+    editableRateTip: "Rate/kg and Waste/bunch can be adjusted instantly for every line item.",
+    
+    // Quick Capture Modal
+    quickCaptureTitle: "Walk-In Customer Quick-Capture",
+    quickCaptureSubtitle: "Enter phone number to track repeat buyer visits and auto-calculate total business.",
+    skipNotice: "Press Enter to Skip or Save instantly",
+    skipButton: "Skip & Print",
+    saveAndPrintButton: "Save & Print Invoice",
+    
+    // Customers Management
+    customersTitle: "Customer Directory",
+    tabPermanent: "Permanent Customers",
+    tabFrequentWalkin: "Frequent Walk-Ins (Staging)",
+    addCustomer: "Add Permanent Customer",
+    searchCustomerPlaceholder: "Search by name, shop name, or phone...",
+    visitCount: "Visits",
+    totalSpent: "Total Business",
+    firstVisit: "First Visit",
+    lastVisit: "Last Visit",
+    promoteBtn: "Promote to Permanent",
+    promotedBadge: "Promoted to Permanent",
+    frequentBadge: "High Volume Buyer (3+ Visits)",
+    noCustomersFound: "No customers found.",
+    noWalkinsFound: "No temporary walk-in records recorded yet.",
+    promoteSuccess: "Customer promoted successfully to permanent list!",
+    
+    // Banana Varieties Management
+    varietiesTitle: "Kerala Banana Varieties Configuration",
+    addVariety: "Add New Variety",
+    varietyNameEn: "Name (English)",
+    varietyNameMl: "Name (Malayalam)",
+    defaultRate: "Default Rate / kg (₹)",
+    defaultStemWaste: "Default Stem Waste / Bunch (kg)",
+    saveVariety: "Save Variety",
+    editVariety: "Edit",
+    deleteVariety: "Delete",
+    
+    // Bills History
+    historyTitle: "Past Billing Invoices",
+    searchBillsPlaceholder: "Search by Bill No, Customer, Phone, or Date...",
+    billNo: "Bill No",
+    date: "Date & Time",
+    printInvoice: "Print / View",
+    viewDetails: "View Bill",
+    todaySales: "Today's Total Sales",
+    todayBunches: "Today's Bunches",
+    todayWeight: "Today's Net Wt (kg)",
+    totalBillsCount: "Total Bills Generated",
+    allTimeBills: "All Bills",
+    
+    // Invoice Printing
+    invoiceTitle: "WHOLESALE TAX INVOICE",
+    invoiceMalayalamTitle: "വാഴപ്പഴ മൊത്തവ്യാപാര ഇൻവോയ്സ്",
+    billTo: "Bill To (വാങ്ങുന്നയാൾ):",
+    invoiceNo: "Invoice No",
+    invoiceDate: "Date & Time",
+    paperSize: "Paper Size",
+    sizeA5: "A4 Half Size (A5 - 148 × 210 mm) [Default]",
+    sizeA4: "Full A4 Size (210 × 297 mm)",
+    printNow: "Print Invoice Now",
+    closePreview: "Close Preview",
+    amountInWords: "Amount in words",
+    rupees: "Rupees",
+    only: "Only",
+    scanAndPay: "Scan QR Code to Pay via UPI",
+    scanSupportedApps: "GPay • PhonePe • Paytm • BHIM • Any UPI",
+    upiIdLabel: "UPI ID: Vyapar.178760240373@hdfcbank",
+    bananaLeavesNotice: "🍃 Banana Leaves are sold based on order",
+    bananaLeavesMalayalamNotice: "വാഴയിലകൾ ഓർഡർ അനുസരിച്ച് നൽകുന്നതാണ്",
+    authorizedSignatory: "Authorized Signatory (അംഗീകൃത ഒപ്പ്)",
+    customerSignature: "Receiver's Signature",
+    thankYou: "Thank you for your business! Please visit again.",
+    
+    // Common / Notifications
+    deleteConfirm: "Are you sure you want to delete this?",
+    successSaved: "Saved successfully!",
+    errorSaving: "Error occurred while saving. Please check details."
+  },
+  
+  ml: {
+    // App Header & Branding
+    appTitle: "കെ.ആർ.എസ് പ്ലാന്റയിൻ മർച്ചന്റ്",
+    appSubtitle: "പ്ലാന്റയിൻ മർച്ചന്റ് & കമ്മീഷൻ ഏജന്റ്",
+    headerMarketLocation: "വാഴിച്ചേരി മാർക്കറ്റ്, ആലപ്പുഴ | ഫോൺ: 9447304307",
+    toggleLanguage: "English",
+    offlineReady: "ഓഫ്‌ലൈൻ മോഡ് തയ്യാറാണ്",
+    
+    // Navigation
+    navBilling: "ബില്ലിംഗ് (POS)",
+    navHistory: "മുൻ ബില്ലുകൾ",
+    navCustomers: "കസ്റ്റമേഴ്സ്",
+    navVarieties: "വാഴപ്പഴ ഇനങ്ങൾ",
+    
+    // Customer Section
+    customerType: "കസ്റ്റമർ തരം",
+    walkInCustomer: "നടപ്പു കസ്റ്റമർ",
+    permanentCustomer: "സ്ഥിരം കസ്റ്റമർ",
+    selectCustomerPlaceholder: "സ്ഥിരം കസ്റ്റമറെ തിരയുക (പേര്, കട, മൊബൈൽ)...",
+    customerName: "കസ്റ്റമറുടെ പേര്",
+    shopName: "കടയുടെ പേര്",
+    phone: "ഫോൺ നമ്പർ",
+    address: "വിലാസം",
+    walkInNotice: "നടപ്പു കസ്റ്റമർ മോഡ്. സേവ് ചെയ്യുമ്പോൾ വിവരങ്ങൾ നൽകാം.",
+    selectedCustomer: "തിരഞ്ഞെടുത്ത കസ്റ്റമർ",
+    changeCustomer: "മാറ്റുക",
+    
+    // Billing Table Headers
+    slNo: "നമ്പർ",
+    variety: "വാഴപ്പഴ ഇനം",
+    bunches: "കുലകൾ",
+    grossWeight: "മൊത്തം തൂക്കം (kg)",
+    wastePerBunch: "തണ്ട് കിഴിവ് / കുലയ്ക്ക് (kg)",
+    totalWaste: "തണ്ട് കിഴിവ് (kg)",
+    netWeight: "ശുദ്ധ തൂക്കം (kg)",
+    ratePerKg: "വില (കിലോയ്ക്ക്) (₹)",
+    subtotal: "തുക (₹)",
+    actions: "നടപടി",
+    
+    // Billing Form & Actions
+    addItem: "ഇനം ചേർക്കുക (Alt+A)",
+    clearBill: "ബിൽ മായ്ക്കുക",
+    saveAndPrint: "സേവ് & പ്രിന്റ് (F9 / Ctrl+S)",
+    saving: "രേഖപ്പെടുത്തുന്നു...",
+    billSummary: "ബിൽ ചുരുക്കം",
+    itemsCount: "ഇനങ്ങൾ",
+    totalBunches: "ആകെ കുലകൾ",
+    totalGrossWeight: "ആകെ മൊത്തം തൂക്കം",
+    totalStemWaste: "ആകെ തണ്ട് കിഴിവ്",
+    totalNetWeight: "ആകെ ശുദ്ധ തൂക്കം",
+    grandTotal: "ആകെ തുക",
+    
+    // Stem Waste Notes
+    stemWasteFormulaHelp: "തണ്ട് കിഴിവ് = കുലകൾ × കുലയൊന്നിന് കിഴിവ് | ശുദ്ധ തൂക്കം = മൊത്തം - തണ്ട് കിഴിവ് | തുക = ശുദ്ധ തൂക്കം × വില",
+    editableRateTip: "ഓരോ ഇനത്തിന്റെയും വിലയും തണ്ട് കിഴിവും ഇവിടെ നേരിട്ട് മാറ്റാവുന്നതാണ്.",
+    
+    // Quick Capture Modal
+    quickCaptureTitle: "നടപ്പു കസ്റ്റമർ വിവരങ്ങൾ",
+    quickCaptureSubtitle: "ഫോൺ നമ്പർ നൽകിയാൽ ഇടപാടുകൾ ഓട്ടോമാറ്റിക്കായി ട്രാക്ക് ചെയ്യപ്പെടും.",
+    skipNotice: "ഒഴിവാക്കാനോ സേവ് ചെയ്യാനോ Enter അമർത്തുക",
+    skipButton: "വിവരങ്ങളില്ലാതെ പ്രിന്റ്",
+    saveAndPrintButton: "സേവ് ചെയ്ത് പ്രിന്റ് ചെയ്യുക",
+    
+    // Customers Management
+    customersTitle: "കസ്റ്റമർ വിവരങ്ങൾ",
+    tabPermanent: "സ്ഥിരം കസ്റ്റമേഴ്സ്",
+    tabFrequentWalkin: "കൂടുതൽ വാങ്ങിയ നടപ്പുകാർ",
+    addCustomer: "പുതിയ കസ്റ്റമറെ ചേർക്കുക",
+    searchCustomerPlaceholder: "പേര്, കട, ഫോൺ എന്നിവ തിരയുക...",
+    visitCount: "തവണകൾ",
+    totalSpent: "ആകെ ബിസിനസ്സ്",
+    firstVisit: "ആദ്യ വാങ്ങൽ",
+    lastVisit: "അവസാന വാങ്ങൽ",
+    promoteBtn: "സ്ഥിരം കസ്റ്റമറാക്കുക",
+    promotedBadge: "സ്ഥിരം ലിസ്റ്റിലേക്ക് മാറ്റി",
+    frequentBadge: "പ്രത്യേക വാങ്ങലുകാരൻ (3+ തവണകൾ)",
+    noCustomersFound: "കസ്റ്റമേഴ്സിനെ കണ്ടെത്തിയില്ല.",
+    noWalkinsFound: "നടപ്പു കസ്റ്റമർ വിവരങ്ങൾ ലഭ്യമല്ല.",
+    promoteSuccess: "കസ്റ്റമറെ സ്ഥിരം കസ്റ്റമർ ലിസ്റ്റിലേക്ക് വിജയകരമായി മാറ്റി!",
+    
+    // Banana Varieties Management
+    varietiesTitle: "കേരള വാഴപ്പഴ ഇനങ്ങളുടെ വിവരങ്ങൾ",
+    addVariety: "പുതിയ ഇനം ചേർക്കുക",
+    varietyNameEn: "പേര് (ഇംഗ്ലീഷ്)",
+    varietyNameMl: "പേര് (മലയാളം)",
+    defaultRate: "സ്വതവേയുള്ള വില (കിലോയ്ക്ക്) (₹)",
+    defaultStemWaste: "കുലയൊന്നിന് തണ്ട് കിഴിവ് (kg)",
+    saveVariety: "ഇനം സേവ് ചെയ്യുക",
+    editVariety: "തിരുത്തുക",
+    deleteVariety: "നീക്കം ചെയ്യുക",
+    
+    // Bills History
+    historyTitle: "മുൻപത്തെ ഇൻവോയ്സുകൾ",
+    searchBillsPlaceholder: "ബിൽ നമ്പർ, കസ്റ്റമർ, ഫോൺ, തീയതി എന്നിവ തിരയുക...",
+    billNo: "ബിൽ നമ്പർ",
+    date: "തീയതി & സമയം",
+    printInvoice: "പ്രിന്റ് / കാണുക",
+    viewDetails: "ബിൽ കാണുക",
+    todaySales: "ഇന്നത്തെ ആകെ വിൽപ്പന",
+    todayBunches: "ഇന്നത്തെ കുലകൾ",
+    todayWeight: "ഇന്നത്തെ ശുദ്ധ തൂക്കം (kg)",
+    totalBillsCount: "ആകെ തയ്യാറാക്കിയ ബില്ലുകൾ",
+    allTimeBills: "എല്ലാ ബില്ലുകളും",
+    
+    // Invoice Printing
+    invoiceTitle: "വാഴപ്പഴ വിൽപന ഇൻവോയ്സ്",
+    invoiceMalayalamTitle: "കെ.ആർ.എസ് പ്ലാന്റയിൻ മർച്ചന്റ് & കമ്മീഷൻ ഏജന്റ്",
+    billTo: "വാങ്ങുന്നയാൾ (Bill To):",
+    invoiceNo: "ഇൻവോയ്സ് നമ്പർ",
+    invoiceDate: "തീയതി & സമയം",
+    paperSize: "പേപ്പർ സൈസ്",
+    sizeA5: "A4 ഹാഫ് സൈസ് (A5 - 148 × 210 mm) [സ്ഥിരതയുള്ളത്]",
+    sizeA4: "ഫുൾ A4 സൈസ് (210 × 297 mm)",
+    printNow: "പ്രിന്റ് ചെയ്യുക",
+    closePreview: "അടയ്ക്കുക",
+    amountInWords: "തുക അക്ഷരത്തിൽ",
+    rupees: "രൂപ",
+    only: "മാത്രം",
+    scanAndPay: "യു.പി.ഐ (UPI) സ്കാൻ ചെയ്ത് പണം നൽകാം",
+    scanSupportedApps: "GPay • PhonePe • Paytm • BHIM • ഏത് UPI ആപ്പും",
+    upiIdLabel: "UPI ID: Vyapar.178760240373@hdfcbank",
+    bananaLeavesNotice: "🍃 വാഴയിലകൾ ഓർഡർ അനുസരിച്ച് നൽകുന്നതാണ്",
+    bananaLeavesMalayalamNotice: "Banana Leaves are sold based on order",
+    authorizedSignatory: "അംഗീകൃത ഒപ്പ് (Authorized Signatory)",
+    customerSignature: "വാങ്ങിയ ആളുടെ ഒപ്പ്",
+    thankYou: "ഞങ്ങളുമായി സഹകരിച്ചതിന് നന്ദി! വീണ്ടും സന്ദർശിക്കുക.",
+    
+    // Common / Notifications
+    deleteConfirm: "ഇത് തീർച്ചയായും നീക്കം ചെയ്യണമെന്നുണ്ടോ?",
+    successSaved: "വിജയകരമായി സേവ് ചെയ്തു!",
+    errorSaving: "സേവ് ചെയ്യുന്നതിൽ പിഴവ് സംഭവിച്ചു. വിവരങ്ങൾ പരിശോധിക്കുക."
+  }
+};

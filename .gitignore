@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Production and Packaging Output
+dist/
+dist-electron/
+release/
+out/
+build/
+
+# Local SQLite Database Files (Stored in OS user data)
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+database/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# OS & Editor Specific Files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment variables
+.env
+.env.local
+.env.*.local

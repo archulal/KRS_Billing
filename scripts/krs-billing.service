@@ -1,0 +1,16 @@
+[Unit]
+Description=KRS Plantain Wholesale Billing Web POS Server
+After=network.target
+
+[Service]
+Type=simple
+User=YOUR_UBUNTU_USERNAME
+WorkingDirectory=/path/to/KRS_Billing
+ExecStart=/usr/bin/node server/index.js
+Restart=always
+RestartSec=10
+Environment=NODE_ENV=production
+Environment=PORT=4567
+
+[Install]
+WantedBy=multi-user.target
