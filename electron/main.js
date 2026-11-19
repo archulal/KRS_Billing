@@ -1,22 +1,38 @@
+
+// electron/main.js
+
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const fs = require('fs');
+const os = require('os');
+const { spawn } = require('child_process');
 
 let mainWindow = null;
 let expressServer = null;
-const BACKEND_PORT = process.env.PORT || 4567;
 
-// Function to start local backend server
+const BACKEND_PORT = process.env.PORT || 4567;
+const DEFAULT_PRINTER = 'G3000USB';
+
+// ---------------------------------------------------------------
+// Start embedded Express backend
 async function startBackend() {
   try {
     const { startServer } = require('../server/index.js');
     const result = await startServer(BACKEND_PORT);
+
     expressServer = result.server;
-    console.log('[Electron] Embedded Express backend running on port:', BACKEND_PORT);
+
+    console.log(
+      '[Electron] Embedded Express backend running on port:',
+      BACKEND_PORT
+    );
   } catch (err) {
-    console.error('[Electron] Failed to start embedded backend server:', err);
+    console.error('[Electron] Failed to start backend:', err);
   }
 }
 
+// ---------------------------------------------------------------
+// Create browser window
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1300,
@@ -24,12 +40,14 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 700,
     title: 'KRS Banana Wholesale Billing | കെ.ആർ.എസ് വാഴപ്പഴ മൊത്തവ്യാപാരം',
+
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: false,
     },
+
     show: false,
     backgroundColor: '#f1f5f9',
   });
@@ -37,21 +55,30 @@ function createWindow() {
   const devUrl = process.env.VITE_DEV_SERVER_URL;
 
   if (devUrl) {
-    console.log('[Electron] Loading Vite Dev Server URL:', devUrl);
+    console.log('[Electron] Loading Vite Dev Server:', devUrl);
     mainWindow.loadURL(devUrl);
   } else {
-    console.log(`[Electron] Loading embedded backend on http://127.0.0.1:${BACKEND_PORT}`);
+    const backendUrl = `http://127.0.0.1:${BACKEND_PORT}`;
+
+    console.log('[Electron] Loading embedded backend:', backendUrl);
+
     mainWindow.webContents.on('did-fail-load', (event, errorCode) => {
-      console.log('[Electron] Load failed with code:', errorCode, '- Retrying in 500ms...');
+      console.log('[Electron] Load failed:', errorCode);
+
       setTimeout(() => {
-        if (mainWindow) mainWindow.loadURL(`http://127.0.0.1:${BACKEND_PORT}`);
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.loadURL(backendUrl);
+        }
       }, 500);
     });
-    mainWindow.loadURL(`http://127.0.0.1:${BACKEND_PORT}`);
+
+    mainWindow.loadURL(backendUrl);
   }
 
   mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.show();
+    }
   });
 
   mainWindow.on('closed', () => {
@@ -59,38 +86,447 @@ function createWindow() {
   });
 }
 
-// IPC handlers for printing
-ipcMain.handle('print-to-printer', async (event, options) => {
-  if (!mainWindow) return false;
+// ---------------------------------------------------------------
+// Global error handling
+process.on('uncaughtException', (err) => {
+  console.error('[Electron] Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[Electron] Unhandled Rejection:', reason);
+});
+
+// ---------------------------------------------------------------
+// IPC: List available printers
+ipcMain.handle('list-printers', async () => {
+  console.log(
+    '[Electron] list-printers invoked',
+    'Version:',
+    process.versions.electron
+  );
+
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    console.error('[Electron] Main window unavailable');
+    return [];
+  }
+
+  const contents = mainWindow.webContents;
+
+  if (contents.isDestroyed()) {
+    console.error('[Electron] WebContents destroyed');
+    return [];
+  }
+
+  if (typeof contents.getPrintersAsync !== 'function') {
+    console.error('[Electron] Printer API unavailable');
+    return [];
+  }
+
+  try {
+    const printers = await contents.getPrintersAsync();
+
+    console.log('[Electron] Printer count:', printers.length);
+
+    printers.forEach((printer, index) => {
+      console.log(`[Printer ${index + 1}]`, {
+        name: printer.name,
+        displayName: printer.displayName,
+        isDefault: printer.isDefault,
+        status: printer.status,
+      });
+    });
+
+    return printers;
+  } catch (error) {
+    console.error('[Electron] Printer enumeration failed:', error);
+    return [];
+  }
+});
+
+// ---------------------------------------------------------------
+// IPC: Normal print (dialog-based fallback)
+//
+// Note: Your earlier testing showed that webContents.print()
+// crashes in your Linux environment. Keep this only if needed.
+ipcMain.handle('print-to-printer', async (event, options = {}) => {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return {
+      success: false,
+      failureReason: 'Window unavailable',
+    };
+  }
+
   return new Promise((resolve) => {
     mainWindow.webContents.print(
       {
-        silent: options?.silent || false,
+        silent: false,
         printBackground: true,
-        pageSize: options?.pageSize || 'A5',
-        margins: {
-          marginType: 'custom',
-          top: 0.2,
-          bottom: 0.2,
-          left: 0.2,
-          right: 0.2,
-        },
+        pageSize: options.pageSize || 'A5',
       },
       (success, failureReason) => {
-        if (!success) console.log('Print failed:', failureReason);
+        if (!success) {
+          console.error('[Electron] Normal print failed:', failureReason);
+        }
+
         resolve({ success, failureReason });
       }
     );
   });
 });
 
+// ---------------------------------------------------------------
+// IPC: Prepare only the React invoice for PDF printing
+//
+// The invoice component must have:
+// <div id="printable-receipt" className="... size-a5">
+// or:
+// <div id="printable-receipt" className="... size-a4">
+//
+// ---------------------------------------------------------------
+async function prepareInvoiceForPrinting(contents, requestedSize) {
+  return contents.executeJavaScript(`
+    (async () => {
+      const receipt = document.getElementById('printable-receipt');
+
+      if (!receipt) {
+        throw new Error(
+          'Invoice element #printable-receipt was not found'
+        );
+      }
+
+      // Detect paper size from the React receipt class.
+      const requestedSize = ${JSON.stringify(requestedSize || '')};
+
+      const paperSize =
+        requestedSize.toLowerCase() === 'a4' ||
+        receipt.classList.contains('size-a4')
+          ? 'A4'
+          : 'A5';
+
+      // Wait for fonts.
+      if (document.fonts && document.fonts.ready) {
+        await document.fonts.ready;
+      }
+
+      // Wait for receipt images, including the QR code.
+      const images = Array.from(receipt.querySelectorAll('img'));
+
+      await Promise.all(
+        images.map((img) => {
+          if (img.complete) {
+            return Promise.resolve();
+          }
+
+          return new Promise((resolve) => {
+            img.addEventListener('load', resolve, { once: true });
+            img.addEventListener('error', resolve, { once: true });
+          });
+        })
+      );
+
+      // Allow React/browser layout to finish.
+      await new Promise((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(resolve);
+        });
+      });
+
+      // Remove an earlier temporary print style if present.
+      const oldStyle = document.getElementById(
+        'krs-temporary-print-style'
+      );
+
+      if (oldStyle) {
+        oldStyle.remove();
+      }
+
+      // Make receipt ancestors visible and remove modal clipping.
+      let parent = receipt.parentElement;
+
+      while (parent && parent !== document.body) {
+        parent.style.setProperty('visibility', 'visible', 'important');
+        parent.style.setProperty('display', 'block', 'important');
+        parent.style.setProperty('overflow', 'visible', 'important');
+        parent.style.setProperty('height', 'auto', 'important');
+        parent.style.setProperty('max-height', 'none', 'important');
+        parent.style.setProperty('transform', 'none', 'important');
+        parent.style.setProperty('position', 'static', 'important');
+
+        parent = parent.parentElement;
+      }
+
+      const style = document.createElement('style');
+
+      style.id = 'krs-temporary-print-style';
+
+      style.textContent = \`
+        @media print {
+          @page {
+            size: \${paperSize} portrait;
+            margin: 0;
+          }
+
+          html,
+          body {
+            width: 100% !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+            background: white !important;
+          }
+
+          body * {
+            visibility: hidden !important;
+          }
+
+          #printable-receipt,
+          #printable-receipt * {
+            visibility: visible !important;
+          }
+
+          #printable-receipt {
+            position: relative !important;
+            display: block !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+            transform: none !important;
+            box-shadow: none !important;
+            background: white !important;
+            break-inside: auto !important;
+            page-break-inside: auto !important;
+          }
+
+          .no-print,
+          .invoice-modal-container,
+          .invoice-modal-dialog,
+          .invoice-scroll-area {
+            box-shadow: none !important;
+          }
+
+          #printable-receipt img {
+            max-width: 100%;
+          }
+        }
+      \`;
+
+      document.head.appendChild(style);
+
+      return {
+        success: true,
+        paperSize,
+        receiptFound: true,
+        imageCount: images.length,
+        receiptClass: receipt.className
+      };
+    })();
+  `);
+}
+
+// ---------------------------------------------------------------
+// IPC: Silent invoice printing
+//
+// Flow:
+// React invoice -> PDF -> temporary file -> CUPS -> printer
+//
+// ---------------------------------------------------------------
+ipcMain.handle('print-silent', async (event, options = {}) => {
+  console.log('[KRS Print] Starting invoice PDF printing');
+
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return {
+      success: false,
+      failureReason: 'Window unavailable',
+    };
+  }
+
+  const contents = mainWindow.webContents;
+
+  if (contents.isDestroyed()) {
+    return {
+      success: false,
+      failureReason: 'WebContents unavailable',
+    };
+  }
+
+  let tempDir = null;
+  let printStyleAdded = false;
+
+  try {
+    // Step 1: Prepare invoice element.
+    console.log('[KRS Print] Preparing invoice element');
+
+    const preparation = await prepareInvoiceForPrinting(
+      contents,
+      options.paperSize
+    );
+
+    if (!preparation.success) {
+      throw new Error('Could not prepare invoice for printing');
+    }
+
+    printStyleAdded = true;
+
+    const pageSize = preparation.paperSize;
+
+    console.log('[KRS Print] Paper size:', pageSize);
+    console.log('[KRS Print] Receipt class:', preparation.receiptClass);
+    console.log('[KRS Print] Images detected:', preparation.imageCount);
+
+    // Step 2: Generate PDF only once.
+    console.log('[KRS Print] Generating PDF');
+
+    const pdfBuffer = await contents.printToPDF({
+      pageSize,
+      printBackground: true,
+      margins: {
+        top: 0,
+        bottom: 0,
+        left: 0,
+        right: 0,
+      },
+      preferCSSPageSize: true,
+    });
+
+    if (!pdfBuffer || pdfBuffer.length === 0) {
+      throw new Error('Generated PDF is empty');
+    }
+
+    console.log(
+      '[KRS Print] PDF generated successfully:',
+      pdfBuffer.length,
+      'bytes'
+    );
+
+    // Step 3: Save temporary PDF.
+    tempDir = await fs.promises.mkdtemp(
+      path.join(os.tmpdir(), 'krs-print-')
+    );
+
+    const pdfPath = path.join(tempDir, 'receipt.pdf');
+
+    await fs.promises.writeFile(pdfPath, pdfBuffer);
+
+    console.log('[KRS Print] PDF saved:', pdfPath);
+
+    // Step 4: Submit PDF to CUPS.
+    const printer = options.printer || DEFAULT_PRINTER;
+
+    console.log('[KRS Print] Sending to printer:', printer);
+
+    const result = await new Promise((resolve, reject) => {
+      const lp = spawn('lp', [
+        '-d',
+        printer,
+        '-o',
+        `media=${pageSize}`,
+        pdfPath,
+      ]);
+
+      let stdout = '';
+      let stderr = '';
+
+      lp.stdout.on('data', (data) => {
+        stdout += data.toString();
+      });
+
+      lp.stderr.on('data', (data) => {
+        stderr += data.toString();
+      });
+
+      lp.on('error', (error) => {
+        reject(error);
+      });
+
+      lp.on('close', (code) => {
+        if (code === 0) {
+          resolve({ stdout, stderr });
+        } else {
+          reject(
+            new Error(
+              stderr || `CUPS lp command exited with code ${code}`
+            )
+          );
+        }
+      });
+    });
+
+    console.log('[KRS Print] CUPS submitted:', result.stdout);
+
+    return {
+      success: true,
+      printer,
+      pageSize,
+      message: result.stdout.trim(),
+    };
+
+  } catch (error) {
+    console.error('[KRS Print] Printing failed:', error);
+
+    return {
+      success: false,
+      failureReason: error.message,
+    };
+
+  } finally {
+    // Step 5: Restore page by removing temporary print CSS.
+    if (
+      printStyleAdded &&
+      contents &&
+      !contents.isDestroyed()
+    ) {
+      try {
+        await contents.executeJavaScript(`
+          (() => {
+            const style = document.getElementById(
+              'krs-temporary-print-style'
+            );
+
+            if (style) {
+              style.remove();
+            }
+          })();
+        `);
+
+        console.log('[KRS Print] Temporary print CSS removed');
+      } catch (cleanupError) {
+        console.error(
+          '[KRS Print] CSS cleanup failed:',
+          cleanupError
+        );
+      }
+    }
+
+    // Step 6: Remove temporary PDF directory.
+    if (tempDir) {
+      await fs.promises.rm(tempDir, {
+        recursive: true,
+        force: true,
+      }).catch((error) => {
+        console.error('[KRS Print] Temp cleanup failed:', error);
+      });
+    }
+  }
+});
+
+// ---------------------------------------------------------------
+// App lifecycle
 app.whenReady().then(async () => {
-  // Set SQLite DB storage directory to official OS userData path
   const userDataPath = app.getPath('userData');
-  process.env.KRS_DATA_DIR = path.join(userDataPath, 'database');
-  console.log('[Electron] App ready, userData path:', userDataPath);
+
+  process.env.KRS_DATA_DIR = path.join(
+    userDataPath,
+    'database'
+  );
+
+  console.log('[Electron] App ready');
+  console.log('[Electron] User data path:', userDataPath);
 
   await startBackend();
+
   createWindow();
 
   app.on('activate', () => {
@@ -103,7 +539,9 @@ app.whenReady().then(async () => {
 app.on('window-all-closed', () => {
   if (expressServer) {
     expressServer.close();
+    expressServer = null;
   }
+
   if (process.platform !== 'darwin') {
     app.quit();
   }
