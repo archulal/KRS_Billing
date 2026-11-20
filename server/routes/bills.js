@@ -326,4 +326,26 @@ router.post('/', (req, res) => {
   }
 });
 
+// ---------------------------------------------------------------
+// PATCH /:id/cancel  –  soft‑delete a bill (set status to 'cancelled')
+router.patch('/:id/cancel', (req, res) => {
+  try {
+    const { id } = req.params;
+    const stmt = db.prepare(`
+      UPDATE bills
+      SET status = 'cancelled'
+      WHERE id = ?
+    `);
+    const info = stmt.run(id);
+    if (info.changes === 0) {
+      return res.status(404).json({ error: 'Bill not found' });
+    }
+    const updatedBill = db.prepare('SELECT * FROM bills WHERE id = ?').get(id);
+    res.json(updatedBill);
+  } catch (err) {
+    console.error('Error cancelling bill:', err);
+    res.status(500).json({ error: err.message || 'Failed to cancel bill' });
+  }
+});
+
 module.exports = router;

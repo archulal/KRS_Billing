@@ -43,14 +43,46 @@ export default function BillsHistoryScreen({ onSelectBillForPrint }) {
       console.error('Error fetching bill details:', err);
     }
   };
+  const handlePrintClice = async (billId) => {
+    console.error('Error fetching bill details:', billId);
+     try {
+      const res = await fetch(`/api/bills/${billId}/cancel`, { method: 'PATCH' });
+      if (!res.ok) throw new Error('Cancel failed');
+      const updated = await res.json();
+      // Update local state
+      setBills((prev) =>
+        prev.map((b) => (b.id === updated.id ? { ...b, ...updated } : b))
+      );
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // Cancel a bill (soft delete)
+  const handleCancelBill = async (billId) => {
+    alert(t('cancelNotice')); // or whatever message key you use
+    if (!window.confirm(t('confirmCancel'))) return;
+
+    try {
+      const res = await fetch(`/api/bills/${billId}/cancel`, { method: 'PATCH' });
+      if (!res.ok) throw new Error('Cancel failed');
+      const updated = await res.json();
+      // Update local state
+      setBills((prev) =>
+        prev.map((b) => (b.id === updated.id ? { ...b, ...updated } : b))
+      );
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   return (
     <div className="space-y-4">
-      
+
       {/* Search & Filter Bar */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          
+
           <div className="flex items-center space-x-3">
             <div className="p-2.5 bg-amber-100 rounded-xl text-amber-800">
               <History className="w-5 h-5" />
@@ -137,11 +169,10 @@ export default function BillsHistoryScreen({ onSelectBillForPrint }) {
                         {b.customer_display_name || 'Walk-In Customer'}
                       </div>
                       <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
-                        <span className={`px-1.5 py-0.2 rounded text-[10px] font-semibold ${
-                          b.customer_type === 'permanent'
-                            ? 'bg-leaf-100 text-leaf-800'
-                            : 'bg-amber-100 text-amber-800'
-                        }`}>
+                        <span className={`px-1.5 py-0.2 rounded text-[10px] font-semibold ${b.customer_type === 'permanent'
+                          ? 'bg-leaf-100 text-leaf-800'
+                          : 'bg-amber-100 text-amber-800'
+                          }`}>
                           {b.customer_type === 'permanent' ? 'Permanent' : 'Walk-In'}
                         </span>
                         {b.customer_phone && <span>📞 {b.customer_phone}</span>}
@@ -180,17 +211,31 @@ export default function BillsHistoryScreen({ onSelectBillForPrint }) {
                     <td className="py-3 px-4 text-right font-mono font-black text-xs text-slate-900">
                       ₹{Number(b.grand_total).toFixed(2)}
                     </td>
-
-                    {/* Action */}
                     <td className="py-3 px-4 text-center">
-                      <button
-                        type="button"
-                        onClick={() => handlePrintClick(b.id)}
-                        className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 mx-auto"
-                      >
-                        <Printer className="w-3.5 h-3.5 text-amber-700" />
-                        <span>{t('printInvoice')}</span>
-                      </button>
+                      <div className="flex gap-2 justify-center">
+                        <button
+                          type="button"
+                          onClick={() => handlePrintClick(b.id)}
+                          className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5"
+                        >
+                          <Printer className="w-3.5 h-3.5 text-amber-700" />
+                          <span>{t('printInvoice')}</span>
+                        </button>
+                        {b.status !== 'cancelled' && (
+                          <button
+                            type="button"
+                            onClick={() => handlePrintClice(b.id)}
+                            className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-900 border border-red-300 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5"
+                          >
+                            <span>{t('cancelBill')}</span>
+                          </button>
+                        )}
+                      </div>
+                      {b.status === 'cancelled' && (
+                        <span className="mt-1 inline-block px-2 py-0.5 bg-gray-200 text-gray-600 text-xs rounded">
+                          {t('cancelled')}
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))

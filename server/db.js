@@ -180,7 +180,18 @@ function initDatabase() {
   }
 }
 
-initDatabase();
+// Migration: add `status` column to `bills` if it doesn't exist
+try {
+  const cols = db.prepare("PRAGMA table_info('bills')").all();
+  const hasStatus = cols.some(c => c.name === 'status');
+  if (!hasStatus) {
+    console.log('[SQLite] Adding missing `status` column to bills table');
+    db.exec(`ALTER TABLE bills ADD COLUMN status TEXT NOT NULL DEFAULT 'active';`);
+  }
+} catch (e) {
+  console.error('[SQLite] Migration error:', e);
+}
+
 
 module.exports = {
   db,

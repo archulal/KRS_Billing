@@ -10,7 +10,7 @@ const { spawn } = require('child_process');
 let mainWindow = null;
 let expressServer = null;
 
-const BACKEND_PORT = process.env.PORT || 4567;
+const BACKEND_PORT = process.env.PORT || 4568;
 const DEFAULT_PRINTER = 'G3000USB';
 
 // ---------------------------------------------------------------
