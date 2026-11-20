@@ -13,7 +13,10 @@
     "build:mac": "npm run build:frontend && electron-builder --mac",
     "build:win": "npm run build:frontend && electron-builder --win",
     "build:linux": "npm run build:frontend && electron-builder --linux",
-    "start": "env -u ELECTRON_RUN_AS_NODE electron ."
+    "start": "env -u ELECTRON_RUN_AS_NODE KRS_ENV=production electron .",
+    "start:server": "cross-env KRS_ENV=production NODE_ENV=production node server/index.js",
+    "clean:demo": "cross-env KRS_ENV=production node scripts/clean_demo_data.js",
+    "test": "node server/test_verification.js"
   },
   "keywords": [
     "banana",

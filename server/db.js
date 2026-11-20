@@ -22,8 +22,18 @@ function getDatabasePath() {
   return path.join(dbDir, 'krs_banana_billing.db');
 }
 
+// APP_ENV controls demo data seeding:
+//   production / prod -> real shop deployment (no sample customers)
+//   test / development -> demo customers are seeded into empty databases
+const APP_ENV = (process.env.KRS_ENV || process.env.NODE_ENV || 'development').toLowerCase();
+const isProduction = APP_ENV === 'production' || APP_ENV === 'prod';
+
 const dbPath = getDatabasePath();
 console.log('[SQLite] Database location:', dbPath);
+console.log(
+  `[SQLite] Environment: ${APP_ENV}` +
+    (isProduction ? ' (production: demo customer seeding disabled)' : ' (demo data enabled)')
+);
 
 const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
@@ -137,46 +147,52 @@ function initDatabase() {
     insertMany(defaultVarieties);
   }
 
-  // Seed 2 Permanent Customers if empty
-  const customerCount = db.prepare('SELECT COUNT(*) as count FROM customers').get().count;
-  if (customerCount === 0) {
-    console.log('[SQLite] Seeding sample Permanent Customers...');
-    const insertCustomer = db.prepare(`
-      INSERT INTO customers (name, shop_name, phone, address)
-      VALUES (?, ?, ?, ?)
-    `);
-    insertCustomer.run('Ananthu K.', 'Ananthu Supermarket', '9847123456', 'Market Road, Alappuzha');
-    insertCustomer.run('Usman Haji', 'Malabar Fresh Fruits', '9447654321', 'Big Bazaar, Alappuzha');
-  }
+  // Demo customers are only for development/test databases.
+  // A production shop always starts with an empty customer directory.
+  if (!isProduction) {
+    // Seed 2 Permanent Customers if empty
+    const customerCount = db.prepare('SELECT COUNT(*) as count FROM customers').get().count;
+    if (customerCount === 0) {
+      console.log('[SQLite] Seeding sample Permanent Customers...');
+      const insertCustomer = db.prepare(`
+        INSERT INTO customers (name, shop_name, phone, address)
+        VALUES (?, ?, ?, ?)
+      `);
+      insertCustomer.run('Ananthu K.', 'Ananthu Supermarket', '9847123456', 'Market Road, Alappuzha');
+      insertCustomer.run('Usman Haji', 'Malabar Fresh Fruits', '9447654321', 'Big Bazaar, Alappuzha');
+    }
 
-  // Seed Frequent Walk-In Customers if empty
-  const walkinCount = db.prepare('SELECT COUNT(*) as count FROM temp_walkin_customers').get().count;
-  if (walkinCount === 0) {
-    console.log('[SQLite] Seeding sample Walk-In Customers with frequent visits...');
-    const insertWalkin = db.prepare(`
-      INSERT INTO temp_walkin_customers (phone, name, shop_name, visit_count, total_spent, first_visit_date, last_visit_date)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `);
-    // Buyer with 4 visits (3+ highlight)
-    insertWalkin.run(
-      '9745112233',
-      'Suresh Kumar',
-      'Suresh Chips & Bakery',
-      4,
-      18450.00,
-      '2026-10-15 10:30:00',
-      '2026-11-10 16:45:00'
-    );
-    // Buyer with 1 visit
-    insertWalkin.run(
-      '9895001122',
-      'Manoj',
-      'Town Fruit Stall',
-      1,
-      4200.00,
-      '2026-11-12 09:15:00',
-      '2026-11-12 09:15:00'
-    );
+    // Seed Frequent Walk-In Customers if empty
+    const walkinCount = db.prepare('SELECT COUNT(*) as count FROM temp_walkin_customers').get().count;
+    if (walkinCount === 0) {
+      console.log('[SQLite] Seeding sample Walk-In Customers with frequent visits...');
+      const insertWalkin = db.prepare(`
+        INSERT INTO temp_walkin_customers (phone, name, shop_name, visit_count, total_spent, first_visit_date, last_visit_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `);
+      // Buyer with 4 visits (3+ highlight)
+      insertWalkin.run(
+        '9745112233',
+        'Suresh Kumar',
+        'Suresh Chips & Bakery',
+        4,
+        18450.00,
+        '2026-10-15 10:30:00',
+        '2026-11-10 16:45:00'
+      );
+      // Buyer with 1 visit
+      insertWalkin.run(
+        '9895001122',
+        'Manoj',
+        'Town Fruit Stall',
+        1,
+        4200.00,
+        '2026-11-12 09:15:00',
+        '2026-11-12 09:15:00'
+      );
+    }
+  } else {
+    console.log('[SQLite] Production mode: skipping sample customers (real data only).');
   }
 }
 
@@ -198,5 +214,7 @@ try {
 
 module.exports = {
   db,
-  dbPath
+  dbPath,
+  appEnv: APP_ENV,
+  isProduction
 };

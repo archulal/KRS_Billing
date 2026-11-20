@@ -548,7 +548,13 @@ app.whenReady().then(async () => {
     'database'
   );
 
+  // Packaged builds are always production. Explicit KRS_ENV (for example
+  // from `npm start`) wins so the app never seeds demo customers in a shop.
+  process.env.KRS_ENV =
+    process.env.KRS_ENV || (app.isPackaged ? 'production' : 'development');
+
   console.log('[Electron] App ready');
+  console.log('[Electron] Environment:', process.env.KRS_ENV);
   console.log('[Electron] User data path:', userDataPath);
 
   await startBackend();

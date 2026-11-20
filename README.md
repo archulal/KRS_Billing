@@ -48,6 +48,55 @@ $$\text{Line Subtotal (₹)} = \text{Net Weight} \times \text{Editable Rate per 
 
 ---
 
+## 🧪 Development, Test & Production Environments
+
+The app uses `KRS_ENV` (falling back to `NODE_ENV`) to decide whether **demo data** is seeded.
+
+| Environment | How to start | Demo customers | Database |
+|:---|:---|:---|:---|
+| **Development** | `npm run dev` | ✅ Seeded when tables are empty | Default app-data location |
+| **Test** | `npm test` | ✅ Seeded | Disposable temp folder (`KRS_DATA_DIR`) |
+| **Production** | `npm start` (desktop) or `npm run start:server` / systemd | ❌ Never seeded | Default app-data location or `KRS_DATA_DIR` |
+
+**Rules**
+- The 5 Kerala banana varieties are always seeded — they are required for billing.
+- Sample **permanent customers** and **walk-in customers** are seeded only in development/test.
+- Production starts with an **empty customer directory**. Add real customers from the **Customers** tab.
+- Existing data is never deleted. Seeding only happens when a table is empty, so a database previously used in development keeps its demo customers. For a clean production database, point `KRS_DATA_DIR` at a new folder or remove the demo customers in the app.
+- `KRS_DATA_DIR=/path/to/folder` overrides the database location. Use it to keep test/staging data completely separate from shop data.
+- `GET /api/health` reports the active environment and database path.
+
+**Quick commands**
+```bash
+npm run dev            # Development: backend :4567 + Vite :5173 + Electron
+npm test               # Isolated test database + full API/billing verification
+npm run build:frontend # Build production assets (required before npm start)
+npm start              # Production desktop app (KRS_ENV=production)
+npm run start:server   # Production web POS server on :4567
+```
+
+> ⚠️ Production mode never seeds demo customers, even on a brand-new database.
+
+**Removing demo customers from an existing database**
+
+If a database was previously used in development, its demo customers stay there (production never deletes data automatically). Preview and then remove only the seeded demo rows — bills are never deleted:
+
+```bash
+# 1. Point at the database folder used by the app
+# macOS (Electron):   "$HOME/Library/Application Support/krs-banana-wholesale-billing/database"
+# Linux (Electron):   "$HOME/.config/krs-banana-wholesale-billing/database"
+# Windows (Electron): "%APPDATA%\\krs-banana-wholesale-billing\\database"
+# Linux web service:  "$HOME/.krs_billing"
+export KRS_DATA_DIR="$HOME/Library/Application Support/krs-banana-wholesale-billing/database"
+
+npm run clean:demo              # preview only — changes nothing
+npm run clean:demo -- --yes     # delete the demo customers
+```
+
+Real customers and all bills are kept. If a demo customer appears on an old bill, only the customer link is cleared; the invoice keeps its stored name.
+
+---
+
 ## 🐧 Ubuntu Linux Setup Guide (After Cloning from GitHub)
 
 Follow these steps on your Ubuntu Linux machine (Ubuntu 20.04, 22.04, or 24.04 LTS):
@@ -73,6 +122,8 @@ Once finished, launch the desktop app anytime with:
 npm start
 ```
 *(Or search **"KRS Banana Wholesale Billing"** in the Ubuntu Applications menu).*
+
+> 🏭 **Production mode:** `npm start` runs with `KRS_ENV=production`, so **no demo customers are seeded**. The shop starts with an empty customer list and the default banana varieties.
 
 ---
 
@@ -111,6 +162,8 @@ npm run build:frontend
 npm start
 ```
 
+> 🧪 To explore the app with demo customers, run `npm run dev` (development) or `npm test` (isolated test database). `npm start` and packaged builds always run in **production** mode with no demo customers.
+
 ---
 
 ### 📦 Building Ubuntu `.deb` and `.AppImage` Installers
@@ -142,6 +195,14 @@ sudo systemctl enable --now krs-billing
 Access billing in any browser at:
 - Counter PC: `http://localhost:4567`
 - Other devices on shop Wi-Fi: `http://<UBUNTU_IP_ADDRESS>:4567`
+
+> 🏭 The systemd unit sets `NODE_ENV=production` and `KRS_ENV=production`, so the web POS also starts with **no demo customers**.
+
+To run a separate **test/staging** instance with demo data (never touching shop data):
+```bash
+KRS_ENV=test PORT=4568 KRS_DATA_DIR=/tmp/krs-test-db node server/index.js
+# Open http://localhost:4568
+```
 
 ---
 

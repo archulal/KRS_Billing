@@ -1,3 +1,14 @@
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+const { execFileSync } = require('child_process');
+
+// Tests always run against an isolated, disposable database so they never
+// touch the real shop data. Test mode intentionally seeds demo customers.
+const TEST_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'krs-test-'));
+process.env.KRS_DATA_DIR = TEST_DATA_DIR;
+process.env.KRS_ENV = 'test';
+
 const { startServer } = require('./index');
 const http = require('http');
 
@@ -39,8 +50,16 @@ async function runTests() {
   try {
     // 1. Health check
     const health = await request('GET', '/api/health');
-    console.log('✓ [Health Check]', health.data.status, 'Database:', health.data.database);
+    console.log(
+      '✓ [Health Check]',
+      health.data.status,
+      'Environment:',
+      health.data.environment,
+      'Database:',
+      health.data.database
+    );
     if (health.status !== 200) throw new Error('Health check failed');
+    if (health.data.environment !== 'test') throw new Error('Test environment not active');
 
     // 2. Banana varieties check (Checking Ethan / ഏത്തൻ)
     const varieties = await request('GET', '/api/banana-types');
@@ -113,12 +132,53 @@ async function runTests() {
       throw new Error('Stem-waste or Grand Total calculation mismatch!');
     }
 
+    // 6. Production mode must NOT seed demo customers
+    const prodDir = fs.mkdtempSync(path.join(os.tmpdir(), 'krs-prod-'));
+    try {
+      const dbModulePath = path.join(__dirname, 'db.js');
+      const output = execFileSync(
+        process.execPath,
+        [
+          '-e',
+          `
+            const { db } = require(${JSON.stringify(dbModulePath)});
+            const customers = db.prepare('SELECT COUNT(*) AS count FROM customers').get().count;
+            const walkins = db.prepare('SELECT COUNT(*) AS count FROM temp_walkin_customers').get().count;
+            const varieties = db.prepare('SELECT COUNT(*) AS count FROM banana_types').get().count;
+            console.log('RESULT:' + JSON.stringify({ customers, walkins, varieties }));
+          `,
+        ],
+        {
+          env: { ...process.env, KRS_DATA_DIR: prodDir, KRS_ENV: 'production' },
+          encoding: 'utf8',
+        }
+      );
+
+      const resultLine = output.split('\n').find((line) => line.startsWith('RESULT:'));
+      const counts = JSON.parse(resultLine.slice('RESULT:'.length));
+
+      if (counts.customers !== 0 || counts.walkins !== 0) {
+        throw new Error('Production database was seeded with demo customers!');
+      }
+      if (counts.varieties === 0) {
+        throw new Error('Production database is missing default banana varieties!');
+      }
+      console.log('✓ [Production Mode] No demo customers seeded; default varieties available.');
+    } finally {
+      fs.rmSync(prodDir, { recursive: true, force: true });
+    }
+
     console.log('\n========================================');
     console.log('🎉 ALL BACKEND & POS LOGIC TESTS PASSED!');
     console.log('========================================\n');
 
   } finally {
     server.close();
+    try {
+      fs.rmSync(TEST_DATA_DIR, { recursive: true, force: true });
+    } catch (cleanupError) {
+      console.warn('Could not remove temporary test database:', cleanupError.message);
+    }
   }
 }
 

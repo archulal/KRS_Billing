@@ -60,7 +60,7 @@ cat <<EOF > "$HOME/.local/share/applications/krs-banana-billing.desktop"
 Name=KRS Banana Wholesale Billing
 GenericName=Billing & POS
 Comment=Offline Desktop POS for Wholesale Banana Trade
-Exec=env -u ELECTRON_RUN_AS_NODE electron "$APP_DIR"
+Exec=env -u ELECTRON_RUN_AS_NODE KRS_ENV=production electron "$APP_DIR"
 Icon=x-office-document
 Terminal=false
 Type=Application
@@ -80,5 +80,11 @@ echo " 1. Desktop Mode (Terminal):  npm start"
 echo " 2. Application Menu:         Search 'KRS Banana Wholesale Billing'"
 echo " 3. Installable .deb file:    sudo dpkg -i release/*.deb"
 echo " 4. Standalone AppImage:      ./release/*.AppImage"
-echo " 5. Web POS (LAN / Browser):  node server/index.js (open http://localhost:4567)"
+echo " 5. Web POS (LAN / Browser):  npm run start:server (open http://localhost:4567)"
+echo ""
+echo "Environment notes:"
+echo " - Desktop launcher, 'npm start' and the web service run in PRODUCTION mode"
+echo "   (KRS_ENV=production): no demo customers are seeded."
+echo " - Use 'npm run dev' for development or 'npm test' for an isolated test database."
+echo " - Use KRS_DATA_DIR=/path/to/folder to keep test data separate from shop data."
 echo ""

@@ -58,6 +58,25 @@ npm install
 npm run build:frontend
 ```
 
+### Step 5: Choose the Environment
+
+`KRS_ENV` (or `NODE_ENV`) controls demo data seeding:
+
+| Environment | Command | Demo customers |
+|:---|:---|:---|
+| **Production** (shop) | `npm start` / `npm run start:server` | ❌ Never seeded |
+| **Development** | `npm run dev` | ✅ Seeded when empty |
+| **Test** | `npm test` (uses a temp DB) | ✅ Seeded |
+
+- Default banana varieties are always created — billing needs them.
+- Sample permanent/walk-in customers are **only** created in development/test.
+- A production database starts with an **empty customer list**; add real buyers from the **Customers** tab.
+- Existing data is never deleted — seeding only fills empty tables.
+- To keep test/staging data separate from shop data, use a custom folder:
+  ```bash
+  KRS_ENV=test PORT=4568 KRS_DATA_DIR=/tmp/krs-test-db node server/index.js
+  ```
+
 ---
 
 ## 📦 Deployment Methods on Ubuntu
@@ -71,6 +90,7 @@ Choose the method that best matches your shop's counter setup:
 npm start
 ```
 *Launches Electron immediately with the embedded Express backend and SQLite database.*
+*Runs in **production** mode (`KRS_ENV=production`) with **no demo customers**.*
 
 #### 2. Package as a Native Ubuntu `.deb` Package:
 ```bash
@@ -119,6 +139,24 @@ sudo systemctl status krs-billing
 - On other shop devices over Wi-Fi / LAN: `http://<UBUNTU_IP_ADDRESS>:4567`
   *(Find IP using `hostname -I` or `ip a`)*
 
+> 🏭 The service file sets `NODE_ENV=production` and `KRS_ENV=production`, so the web POS starts with **no demo customers**. Verify with:
+> ```bash
+> curl http://localhost:4567/api/health
+> ```
+> The response should show `"environment":"production"`.
+
+#### 4. Optional: Run a Separate Test / Staging Instance
+Never mix test data with the shop database. Use a different port and data folder:
+```bash
+KRS_ENV=test PORT=4568 KRS_DATA_DIR=/tmp/krs-test-db node server/index.js
+```
+Open `http://localhost:4568`. This instance seeds demo customers and stores its data in `/tmp/krs-test-db`.
+
+To run the automated test suite (isolated temporary database):
+```bash
+npm test
+```
+
 ---
 
 ## 🖨️ Printer Setup on Ubuntu (Canon PIXMA G3000 Series)
@@ -139,6 +177,28 @@ sudo systemctl status krs-billing
   `~/.config/krs-banana-wholesale-billing/database/krs_banana_billing.db`
 - **Database file location (Headless Web Service)**:
   `~/.krs_billing/krs_banana_billing.db`
+- **Custom location**: set `KRS_DATA_DIR=/path/to/folder` for any environment.
+  Use this to keep test/staging databases separate from production.
+
+> ℹ️ Switching an existing database to production does **not** remove customers that were created earlier (including demo customers from a previous development run). Seeding only affects empty tables. Start with a fresh `KRS_DATA_DIR` for a clean production database, delete the demo customers in the Customers screen, or use the cleanup command below.
+
+### Remove Demo Customers from an Existing Database
+The cleanup tool deletes only the exact demo rows created by the seed (name + phone match). It is a dry run unless `--yes` is passed, and it never deletes bills:
+
+```bash
+cd /path/to/KRS_Billing
+
+# Electron desktop app database
+export KRS_DATA_DIR="$HOME/.config/krs-banana-wholesale-billing/database"
+
+# Headless web service database instead:
+# export KRS_DATA_DIR="$HOME/.krs_billing"
+
+npm run clean:demo              # preview — changes nothing
+npm run clean:demo -- --yes     # delete the demo customers
+```
+
+Real customers and bills remain. If a demo customer is referenced by an old bill, only the customer link is cleared; the invoice keeps its stored display name.
 
 ### Backup Command (Daily Backup):
 ```bash

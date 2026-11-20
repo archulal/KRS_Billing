@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-const { dbPath } = require('./db');
+const { dbPath, appEnv } = require('./db');
 
 const bananaTypesRouter = require('./routes/bananaTypes');
 const customersRouter = require('./routes/customers');
@@ -24,6 +24,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     service: 'KRS Banana Billing Backend',
+    environment: appEnv,
     database: dbPath,
     timestamp: new Date().toISOString()
   });
