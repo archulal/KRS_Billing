@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const { spawn } = require('child_process');
+const whatsapp = require('./whatsapp');
 
 let mainWindow = null;
 let expressServer = null;
@@ -52,6 +53,8 @@ function createWindow() {
     backgroundColor: '#f1f5f9',
   });
 
+  whatsapp.setWindow(mainWindow);
+
   const devUrl = process.env.VITE_DEV_SERVER_URL;
 
   if (devUrl) {
@@ -82,6 +85,7 @@ function createWindow() {
   });
 
   mainWindow.on('closed', () => {
+    whatsapp.setWindow(null);
     mainWindow = null;
   });
 }
@@ -335,6 +339,78 @@ async function prepareInvoiceForPrinting(contents, requestedSize) {
   `);
 }
 
+// Undo the temporary layout changes made by prepareInvoiceForPrinting().
+async function restoreInvoicePage(contents) {
+  if (!contents || contents.isDestroyed()) return;
+
+  try {
+    await contents.executeJavaScript(`
+      (() => {
+        const style = document.getElementById('krs-temporary-print-style');
+        if (style) style.remove();
+
+        document.querySelectorAll('[data-krs-original-style]').forEach((element) => {
+          const original = element.getAttribute('data-krs-original-style');
+          if (original) {
+            element.setAttribute('style', original);
+          } else {
+            element.removeAttribute('style');
+          }
+          element.removeAttribute('data-krs-original-style');
+        });
+      })();
+    `);
+  } catch (err) {
+    console.error('[KRS] Failed to restore invoice page:', err);
+  }
+}
+
+// ---------------------------------------------------------------
+// IPC: Generate a PDF of the visible invoice for WhatsApp sharing.
+// Uses the same printToPDF pipeline as silent printing so the PDF is
+// identical to the printed bill (including Malayalam text and UPI QR).
+// ---------------------------------------------------------------
+ipcMain.handle('generate-bill-pdf', async (event, options = {}) => {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return { success: false, error: 'Window unavailable' };
+  }
+
+  const contents = mainWindow.webContents;
+  let prepared = false;
+
+  try {
+    const preparation = await prepareInvoiceForPrinting(contents, 'A5');
+    if (!preparation.success) throw new Error('Invoice is not visible');
+
+    prepared = true;
+
+    const pdfBuffer = await contents.printToPDF({
+      pageSize: 'A5',
+      printBackground: true,
+      margins: { top: 0, bottom: 0, left: 0, right: 0 },
+      preferCSSPageSize: true
+    });
+
+    if (!pdfBuffer || pdfBuffer.length === 0) {
+      throw new Error('Generated PDF is empty');
+    }
+
+    const pdfDir = path.join(app.getPath('userData'), 'bill-pdfs');
+    await fs.promises.mkdir(pdfDir, { recursive: true });
+
+    const safeName = String(options.billNumber || 'bill').replace(/[^A-Za-z0-9_-]/g, '_');
+    const filePath = path.join(pdfDir, `${safeName}.pdf`);
+    await fs.promises.writeFile(filePath, pdfBuffer);
+
+    return { success: true, filePath };
+  } catch (err) {
+    console.error('[KRS PDF] Failed to generate bill PDF:', err);
+    return { success: false, error: err.message || 'Could not generate PDF' };
+  } finally {
+    if (prepared) await restoreInvoicePage(contents);
+  }
+});
+
 // ---------------------------------------------------------------
 // IPC: Silent invoice printing
 //
@@ -482,48 +558,8 @@ ipcMain.handle('print-silent', async (event, options = {}) => {
 
   } finally {
     // Step 5: Restore page by removing temporary print CSS.
-    if (
-      printStyleAdded &&
-      contents &&
-      !contents.isDestroyed()
-    ) {
-      try {
-        await contents.executeJavaScript(`
-          (() => {
-            const style = document.getElementById(
-              'krs-temporary-print-style'
-            );
-
-            if (style) {
-              style.remove();
-            }
-
-            // Restore any layout changes made for printing.
-            document
-              .querySelectorAll('[data-krs-original-style]')
-              .forEach((element) => {
-                const original = element.getAttribute(
-                  'data-krs-original-style'
-                );
-
-                if (original) {
-                  element.setAttribute('style', original);
-                } else {
-                  element.removeAttribute('style');
-                }
-
-                element.removeAttribute('data-krs-original-style');
-              });
-          })();
-        `);
-
-        console.log('[KRS Print] Temporary print CSS removed');
-      } catch (cleanupError) {
-        console.error(
-          '[KRS Print] CSS cleanup failed:',
-          cleanupError
-        );
-      }
+    if (printStyleAdded) {
+      await restoreInvoicePage(contents);
     }
 
     // Step 6: Remove temporary PDF directory.
@@ -537,6 +573,14 @@ ipcMain.handle('print-silent', async (event, options = {}) => {
     }
   }
 });
+
+// ---------------------------------------------------------------
+// IPC: WhatsApp Web connection and bill delivery
+// ---------------------------------------------------------------
+ipcMain.handle('whatsapp:get-status', () => whatsapp.getStatus());
+ipcMain.handle('whatsapp:connect', () => whatsapp.connect());
+ipcMain.handle('whatsapp:disconnect', () => whatsapp.disconnect());
+ipcMain.handle('whatsapp:send-bill', (event, payload) => whatsapp.sendBillPdf(payload));
 
 // ---------------------------------------------------------------
 // App lifecycle
@@ -561,6 +605,9 @@ app.whenReady().then(async () => {
 
   createWindow();
 
+  // Reconnect WhatsApp automatically when an owner number is configured.
+  whatsapp.autoConnect();
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
@@ -577,4 +624,8 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+app.on('before-quit', () => {
+  whatsapp.shutdown();
 });

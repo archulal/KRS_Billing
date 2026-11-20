@@ -7,6 +7,7 @@ const { dbPath, appEnv } = require('./db');
 const bananaTypesRouter = require('./routes/bananaTypes');
 const customersRouter = require('./routes/customers');
 const billsRouter = require('./routes/bills');
+const settingsRouter = require('./routes/settings');
 
 const app = express();
 const PORT = process.env.PORT || 4567;
@@ -18,6 +19,7 @@ app.use(express.json());
 app.use('/api/banana-types', bananaTypesRouter);
 app.use('/api/customers', customersRouter);
 app.use('/api/bills', billsRouter);
+app.use('/api/settings', settingsRouter);
 
 // Health & System Info
 app.get('/api/health', (req, res) => {

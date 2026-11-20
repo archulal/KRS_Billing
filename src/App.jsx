@@ -6,6 +6,7 @@ import BillingScreen from './components/BillingScreen';
 import BillsHistoryScreen from './components/BillsHistoryScreen';
 import CustomersScreen from './components/CustomersScreen';
 import VarietiesScreen from './components/VarietiesScreen';
+import SettingsScreen from './components/SettingsScreen';
 import PrintableInvoice from './components/PrintableInvoice';
 
 export default function App() {
@@ -17,6 +18,7 @@ export default function App() {
   const [activeInvoice, setActiveInvoice] = useState(null);
   const [invoiceMode, setInvoiceMode] = useState('print'); // 'print' (POS direct print) | 'preview' (history)
   const [frequentCount, setFrequentCount] = useState(0);
+  const [settings, setSettings] = useState(null);
 
   // Fetch initial data
   const fetchBananaTypes = async () => {
@@ -55,6 +57,17 @@ export default function App() {
     }
   };
 
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch('/api/settings');
+      if (res.ok) {
+        setSettings(await res.json());
+      }
+    } catch (err) {
+      console.error('Failed to fetch settings:', err);
+    }
+  };
+
   const fetchWalkinCount = async () => {
     try {
       const res = await fetch('/api/customers/walkin');
@@ -73,9 +86,10 @@ export default function App() {
     fetchPermanentCustomers();
     fetchStats();
     fetchWalkinCount();
+    fetchSettings();
   }, []);
 
-  // Global Function key shortcuts (F1, F2, F3, F4)
+  // Global Function key shortcuts (F1, F2, F3, F4, F5)
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'F1') {
@@ -90,6 +104,9 @@ export default function App() {
       } else if (e.key === 'F4') {
         e.preventDefault();
         setActiveTab('varieties');
+      } else if (e.key === 'F5') {
+        e.preventDefault();
+        setActiveTab('settings');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -159,6 +176,13 @@ export default function App() {
             onRefreshVarieties={fetchBananaTypes}
           />
         )}
+
+        {activeTab === 'settings' && (
+          <SettingsScreen
+            settings={settings}
+            onSettingsSaved={setSettings}
+          />
+        )}
       </main>
 
       {/* Offline Desktop Footer Note */}
@@ -173,6 +197,7 @@ export default function App() {
         <PrintableInvoice
           bill={activeInvoice}
           mode={invoiceMode}
+          settings={settings}
           onClose={() => setActiveInvoice(null)}
         />
       )}

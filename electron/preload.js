@@ -13,5 +13,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
 
   // Fetch list of printers (used to get the device name)
-  listPrinters: () => ipcRenderer.invoke('list-printers')
+  listPrinters: () => ipcRenderer.invoke('list-printers'),
+
+  // Generate a PDF of the currently visible invoice for WhatsApp sharing
+  generateBillPdf: (options) => ipcRenderer.invoke('generate-bill-pdf', options),
+
+  // WhatsApp Web automation (main process owns the client/session)
+  whatsapp: {
+    getStatus: () => ipcRenderer.invoke('whatsapp:get-status'),
+    connect: () => ipcRenderer.invoke('whatsapp:connect'),
+    disconnect: () => ipcRenderer.invoke('whatsapp:disconnect'),
+    sendBill: (payload) => ipcRenderer.invoke('whatsapp:send-bill', payload),
+    onStatus: (callback) => {
+      const listener = (_event, status) => callback(status);
+      ipcRenderer.on('whatsapp:status', listener);
+      return () => ipcRenderer.removeListener('whatsapp:status', listener);
+    }
+  }
 });

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
-import { History, Search, Calendar, Printer, FileText, TrendingUp, ShoppingBag, Weight } from 'lucide-react';
+import { History, Search, Calendar, Printer, FileText, TrendingUp, ShoppingBag, Weight, MessageCircle } from 'lucide-react';
 
 export default function BillsHistoryScreen({ onSelectBillForPrint }) {
   const { lang, t } = useLanguage();
@@ -145,7 +145,7 @@ export default function BillsHistoryScreen({ onSelectBillForPrint }) {
                 <th className="py-3 px-4 text-right w-28">{t('totalWaste')}</th>
                 <th className="py-3 px-4 text-right w-28">{t('netWeight')}</th>
                 <th className="py-3 px-4 text-right w-32 font-black">{t('grandTotal')}</th>
-                <th className="py-3 px-4 text-center w-28">{t('actions')}</th>
+                <th className="py-3 px-4 text-center w-52">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -220,6 +220,15 @@ export default function BillsHistoryScreen({ onSelectBillForPrint }) {
                         >
                           <Printer className="w-3.5 h-3.5 text-amber-700" />
                           <span>{t('printInvoice')}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handlePrintClick(b.id)}
+                          className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5"
+                          title={t('waSend')}
+                        >
+                          <MessageCircle className="w-3.5 h-3.5 text-emerald-700" />
+                          <span>{t('waSend')}</span>
                         </button>
                         {b.status !== 'cancelled' && (
                           <button

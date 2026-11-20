@@ -42,9 +42,38 @@ $$\text{Line Subtotal (₹)} = \text{Net Weight} \times \text{Editable Rate per 
 - `F2`: Bills History
 - `F3`: Customers Directory (with frequent walk-ins promotion)
 - `F4`: Banana Varieties Configuration
+- `F5`: Settings (WhatsApp sender number & connection)
 - `Alt + A`: Add Line Item row
 - `Alt + C`: Clear current bill
 - `F9` or `Ctrl + S`: Save & Print Invoice
+
+---
+
+## 📲 Send PDF Bills on WhatsApp (Desktop App)
+
+Bills can be shared as a PDF directly to a customer's WhatsApp number. The PDF is generated from the same invoice component used for printing, so it matches the printed bill exactly (including Malayalam text and the UPI QR).
+
+### One-time setup
+1. Open the **Settings** tab (`F5`) in the desktop app.
+2. Enter the **owner WhatsApp number** — this is the account bills are sent **from**. Use 10 digits or `+91...`.
+3. Optionally edit the bill message template (`{bill_number}`, `{amount}`, `{customer}` placeholders) and click **Save Settings**.
+4. Click **Connect WhatsApp** and scan the QR code with the owner's phone:
+   WhatsApp → **Settings → Linked devices → Link a device**.
+5. When the status shows **Connected**, confirm the logged-in number matches the configured owner number. Sending is blocked if they differ.
+
+The QR needs scanning only once; the session is stored under the app data folder (`whatsapp-session`).
+
+### Sending a bill
+- **Bills History** → click the green **Send on WhatsApp** button on a bill, then click **Send on WhatsApp** in the invoice preview.
+- The customer number is taken from the bill (`customer_phone`); if the bill has none, you are prompted to enter it.
+- A successful send shows a confirmation in the preview toolbar.
+
+### Requirements & notes
+- Desktop (Electron) mode only. The browser/server POS does not send WhatsApp messages.
+- An internet connection is required for WhatsApp Web, even though billing itself stays offline.
+- A Chrome/Chromium installation is used when available; otherwise the Chromium bundled with `whatsapp-web.js` is used. On Ubuntu you can set `KRS_CHROME_PATH=/path/to/chromium` before starting the app if auto-detection fails.
+- Generated PDFs are kept in `bill-pdfs` under the app data folder.
+- WhatsApp Web automation is unofficial; keep the owner's phone linked and avoid sending large batches at once.
 
 ---
 
@@ -133,8 +162,9 @@ npm start
 ```bash
 sudo apt update
 sudo apt install -y curl git build-essential python3 make g++ libfuse2 fonts-noto-core fonts-smc-* cups printer-driver-gutenprint
+sudo snap install chromium   # used by WhatsApp bill sending (optional but recommended)
 ```
-*(These packages are required to compile `better-sqlite3` native drivers and render Malayalam fonts crisply on screen and in print).*
+*(These packages are required to compile `better-sqlite3` native drivers and render Malayalam fonts crisply on screen and in print. Chromium is used by the WhatsApp Web automation for sending PDF bills.)*
 
 #### Step 2: Install Node.js (v20 LTS)
 ```bash

@@ -115,6 +115,14 @@ function initDatabase() {
     );
   `);
 
+  // 6. settings table (key/value configuration such as the WhatsApp owner number)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL DEFAULT ''
+    );
+  `);
+
   // Auto-migrate any existing Nendran references to Ethan / ഏത്തൻ
   db.prepare(`
     UPDATE banana_types 
@@ -212,9 +220,41 @@ try {
 }
 
 
+// ---------------------------------------------------------------
+// Settings helpers (small key/value configuration store)
+// ---------------------------------------------------------------
+const SETTING_DEFAULTS = {
+  whatsapp_owner_number: '',
+  whatsapp_message_template:
+    'KRS Plantain Merchant & Commission Agent\nBill {bill_number}\nAmount: {amount}\nPlease find the attached PDF bill.\nThank you!'
+};
+
+function getSetting(key, fallback = '') {
+  const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);
+  return row ? row.value : (key in SETTING_DEFAULTS ? SETTING_DEFAULTS[key] : fallback);
+}
+
+function getAllSettings() {
+  const result = { ...SETTING_DEFAULTS };
+  for (const row of db.prepare('SELECT key, value FROM settings').all()) {
+    result[row.key] = row.value;
+  }
+  return result;
+}
+
+function setSetting(key, value) {
+  db.prepare(`
+    INSERT INTO settings (key, value) VALUES (?, ?)
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value
+  `).run(key, String(value == null ? '' : value));
+}
+
 module.exports = {
   db,
   dbPath,
   appEnv: APP_ENV,
-  isProduction
+  isProduction,
+  getSetting,
+  getAllSettings,
+  setSetting
 };

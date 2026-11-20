@@ -27,6 +27,16 @@ sudo apt-get install -y \
     printer-driver-gutenprint \
     cups
 
+# 1b. Chromium is used by WhatsApp Web automation for sending PDF bills.
+echo "🌐 [1b] Checking for Chrome/Chromium (needed for WhatsApp bill sending)..."
+if ! command -v google-chrome &> /dev/null && ! command -v chromium &> /dev/null && ! command -v chromium-browser &> /dev/null; then
+    if command -v snap &> /dev/null; then
+        sudo snap install chromium || echo "Note: Chromium install was skipped. Set KRS_CHROME_PATH to your browser path."
+    else
+        sudo apt-get install -y chromium-browser || echo "Note: Chromium install was skipped. Set KRS_CHROME_PATH to your browser path."
+    fi
+fi
+
 # 2. Check / Install Node.js (v20 LTS recommended)
 echo "🟢 [2/6] Checking Node.js runtime..."
 if ! command -v node &> /dev/null || [ "$(node -v | cut -d'.' -f1 | tr -d 'v')" -lt 18 ]; then

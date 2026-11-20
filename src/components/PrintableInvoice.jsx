@@ -1,6 +1,6 @@
 // src/components/PrintableInvoice.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { Printer, X, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Printer, X, FileText, CheckCircle2, AlertCircle, MessageCircle, Loader2 } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import QRCode from 'qrcode';
 import krsLogoPrint from '../assets/krs_banana_tree.png';
@@ -24,13 +24,14 @@ function numberToWords(amount) {
   return `Rupees ${inWords(num).trim()} Only`;
 }
 
-export default function PrintableInvoice({ bill, onClose, mode = 'print' }) {
+export default function PrintableInvoice({ bill, onClose, mode = 'print', settings }) {
   const { lang, t } = useLanguage();
   const [paperSize] = useState('a5'); // fixed to A5 as per requirement
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [printerName, setPrinterName] = useState(null);
   const [customerName, setCustomerName] = useState(null);
   const [printStatus, setPrintStatus] = useState(null);
+  const [waStatus, setWaStatus] = useState(null);
   const receiptRef = useRef(null);
 
   const isElectron = typeof window !== 'undefined' && !!window.electronAPI;
@@ -121,6 +122,52 @@ export default function PrintableInvoice({ bill, onClose, mode = 'print' }) {
     } catch (err) {
       console.error('Manual print error →', err);
       setPrintStatus({ type: 'error', message: err.message || t('printFailed') });
+    }
+  };
+
+  // 6️⃣ Generate the exact printed invoice as a PDF and send it on WhatsApp.
+  const buildWhatsAppCaption = () => {
+    const template =
+      settings?.whatsapp_message_template ||
+      'KRS Plantain Merchant & Commission Agent\nBill {bill_number}\nAmount: {amount}\nPlease find the attached PDF bill.\nThank you!';
+
+    return template
+      .replace(/\{bill_number\}/g, bill.bill_number || '')
+      .replace(/\{amount\}/g, `₹${Number(bill.grand_total || 0).toFixed(2)}`)
+      .replace(/\{customer\}/g, customerName || t('customer'));
+  };
+
+  const handleSendWhatsApp = async () => {
+    if (!window.electronAPI?.whatsapp || !window.electronAPI?.generateBillPdf) {
+      setWaStatus({ type: 'error', message: t('waDesktopOnly') });
+      return;
+    }
+
+    let phone = (bill.customer_phone || '').trim();
+    if (!phone) {
+      const entered = window.prompt(t('waNoPhone'), '');
+      if (!entered || !entered.trim()) return;
+      phone = entered.trim();
+    }
+
+    setWaStatus({ type: 'info', message: t('waSending') });
+    try {
+      const pdf = await window.electronAPI.generateBillPdf({ billNumber: bill.bill_number });
+      if (!pdf?.success) {
+        throw new Error(pdf?.error || t('printFailed'));
+      }
+
+      const result = await window.electronAPI.whatsapp.sendBill({
+        phone,
+        filePath: pdf.filePath,
+        caption: buildWhatsAppCaption()
+      });
+
+      if (!result?.success) throw new Error(result?.error || t('waSettingsError'));
+      setWaStatus({ type: 'success', message: t('waSent') });
+    } catch (err) {
+      console.error('WhatsApp send error →', err);
+      setWaStatus({ type: 'error', message: err.message || t('waSettingsError') });
     }
   };
 
@@ -299,6 +346,8 @@ export default function PrintableInvoice({ bill, onClose, mode = 'print' }) {
   );
 
   // History flow: show the invoice first, print only when asked.
+  const activeStatus = waStatus || printStatus;
+
   if (mode === 'preview') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/70 backdrop-blur-sm invoice-modal-container">
@@ -332,18 +381,19 @@ export default function PrintableInvoice({ bill, onClose, mode = 'print' }) {
 
           {/* Preview Actions */}
           <div className="no-print bg-slate-50 border-t border-slate-200 px-4 sm:px-5 py-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 shrink-0">
-            <div className="text-[11px] font-medium min-h-[16px]">
-              {printStatus ? (
-                <span className={`inline-flex items-center gap-1.5 ${
-                  printStatus.type === 'success'
+            <div className="text-[11px] font-medium min-h-[16px] max-w-md">
+              {activeStatus ? (
+                <span className={`inline-flex items-start gap-1.5 ${
+                  activeStatus.type === 'success'
                     ? 'text-emerald-700'
-                    : printStatus.type === 'error'
+                    : activeStatus.type === 'error'
                     ? 'text-red-600'
                     : 'text-slate-600'
                 }`}>
-                  {printStatus.type === 'success' && <CheckCircle2 className="w-3.5 h-3.5" />}
-                  {printStatus.type === 'error' && <AlertCircle className="w-3.5 h-3.5" />}
-                  {printStatus.message}
+                  {activeStatus.type === 'success' && <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" />}
+                  {activeStatus.type === 'error' && <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />}
+                  {activeStatus.type === 'info' && <Loader2 className="w-3.5 h-3.5 shrink-0 mt-0.5 animate-spin" />}
+                  <span>{activeStatus.message}</span>
                 </span>
               ) : (
                 <span className="text-slate-500">
@@ -358,6 +408,19 @@ export default function PrintableInvoice({ bill, onClose, mode = 'print' }) {
                 className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded-lg transition-all"
               >
                 {t('closePreview')}
+              </button>
+              <button
+                type="button"
+                onClick={handleSendWhatsApp}
+                disabled={waStatus?.type === 'info'}
+                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-60 text-white font-black text-xs rounded-xl shadow-md shadow-emerald-900/25 transition-all flex items-center justify-center gap-2"
+              >
+                {waStatus?.type === 'info' ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <MessageCircle className="w-4 h-4" />
+                )}
+                <span>{t('waSend')}</span>
               </button>
               <button
                 type="button"

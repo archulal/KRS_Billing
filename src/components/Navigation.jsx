@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
-import { ShoppingCart, History, Users, Layers } from 'lucide-react';
+import { ShoppingCart, History, Users, Layers, Settings as SettingsIcon } from 'lucide-react';
 
 export default function Navigation({ activeTab, setActiveTab, frequentCount = 0 }) {
   const { t } = useLanguage();
@@ -30,6 +30,12 @@ export default function Navigation({ activeTab, setActiveTab, frequentCount = 0 
       label: t('navVarieties'),
       icon: Layers,
       shortcut: 'F4',
+    },
+    {
+      id: 'settings',
+      label: t('navSettings'),
+      icon: SettingsIcon,
+      shortcut: 'F5',
     },
   ];
 
