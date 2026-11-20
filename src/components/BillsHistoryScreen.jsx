@@ -8,6 +8,7 @@ export default function BillsHistoryScreen({ onSelectBillForPrint }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [cancelNotice, setCancelNotice] = useState(null);
 
   const fetchBills = async () => {
     setIsLoading(true);
@@ -43,36 +44,56 @@ export default function BillsHistoryScreen({ onSelectBillForPrint }) {
       console.error('Error fetching bill details:', err);
     }
   };
-  const handlePrintClice = async (billId) => {
-    console.error('Error fetching bill details:', billId);
-     try {
-      const res = await fetch(`/api/bills/${billId}/cancel`, { method: 'PATCH' });
-      if (!res.ok) throw new Error('Cancel failed');
-      const updated = await res.json();
-      // Update local state
-      setBills((prev) =>
-        prev.map((b) => (b.id === updated.id ? { ...b, ...updated } : b))
-      );
-    } catch (e) {
-      console.error(e);
-    }
+  const buildCancelMessage = (bill) => {
+    const date = bill.date
+      ? new Date(bill.date).toLocaleDateString(lang === 'ml' ? 'ml-IN' : 'en-IN', { dateStyle: 'medium' })
+      : '';
+    return [
+      'KRS Plantain Merchant & Commission Agent',
+      `Bill ${bill.bill_number} dated ${date} for ₹${Number(bill.grand_total || 0).toFixed(2)} has been CANCELLED.`,
+      'Please ignore this invoice.',
+      'ഈ ബിൽ റദ്ദാക്കപ്പെട്ടു. ദയവായി ഇത് പരിഗണിക്കരുത്.'
+    ].join('\n');
   };
 
-  // Cancel a bill (soft delete)
+  // Cancel a bill (soft delete) and notify the customer on WhatsApp.
   const handleCancelBill = async (billId) => {
-    alert(t('cancelNotice')); // or whatever message key you use
-    if (!window.confirm(t('confirmCancel'))) return;
+    if (!window.confirm(t('confirmCancelBill'))) return;
+
+    const bill = bills.find((b) => b.id === billId);
+    setCancelNotice(null);
 
     try {
       const res = await fetch(`/api/bills/${billId}/cancel`, { method: 'PATCH' });
       if (!res.ok) throw new Error('Cancel failed');
       const updated = await res.json();
-      // Update local state
       setBills((prev) =>
         prev.map((b) => (b.id === updated.id ? { ...b, ...updated } : b))
       );
+
+      const phone = (bill?.customer_phone || '').trim();
+      if (!phone) {
+        setCancelNotice({ type: 'warning', message: t('waCancelNoNumberSkipped') });
+        return;
+      }
+      if (!window.electronAPI?.whatsapp?.sendText) {
+        setCancelNotice({ type: 'warning', message: t('waDesktopOnly') });
+        return;
+      }
+
+      try {
+        await window.electronAPI.whatsapp.sendText({
+          phone,
+          message: buildCancelMessage(bill)
+        });
+        setCancelNotice({ type: 'success', message: t('waCancelMessageSent') });
+      } catch (err) {
+        console.error('Cancellation WhatsApp error:', err);
+        setCancelNotice({ type: 'error', message: t('waCancelSendFailed') });
+      }
     } catch (e) {
       console.error(e);
+      setCancelNotice({ type: 'error', message: e.message || t('errorSaving') });
     }
   };
 
@@ -130,6 +151,28 @@ export default function BillsHistoryScreen({ onSelectBillForPrint }) {
 
         </div>
       </div>
+
+      {cancelNotice && (
+        <div
+          className={`flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl border text-xs font-semibold ${
+            cancelNotice.type === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : cancelNotice.type === 'error'
+              ? 'bg-red-50 border-red-200 text-red-700'
+              : 'bg-amber-50 border-amber-200 text-amber-800'
+          }`}
+        >
+          <span>{cancelNotice.message}</span>
+          <button
+            type="button"
+            onClick={() => setCancelNotice(null)}
+            className="opacity-60 hover:opacity-100"
+            aria-label="Dismiss"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Bills Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -233,7 +276,7 @@ export default function BillsHistoryScreen({ onSelectBillForPrint }) {
                         {b.status !== 'cancelled' && (
                           <button
                             type="button"
-                            onClick={() => handlePrintClice(b.id)}
+                            onClick={() => handleCancelBill(b.id)}
                             className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-900 border border-red-300 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5"
                           >
                             <span>{t('cancelBill')}</span>

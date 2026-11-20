@@ -8,6 +8,7 @@ import CustomersScreen from './components/CustomersScreen';
 import VarietiesScreen from './components/VarietiesScreen';
 import SettingsScreen from './components/SettingsScreen';
 import PrintableInvoice from './components/PrintableInvoice';
+import { MessageCircle } from 'lucide-react';
 
 export default function App() {
   const { lang, t } = useLanguage();
@@ -19,6 +20,8 @@ export default function App() {
   const [invoiceMode, setInvoiceMode] = useState('print'); // 'print' (POS direct print) | 'preview' (history)
   const [frequentCount, setFrequentCount] = useState(0);
   const [settings, setSettings] = useState(null);
+  const [autoSendWhatsApp, setAutoSendWhatsApp] = useState(false);
+  const [toast, setToast] = useState(null);
 
   // Fetch initial data
   const fetchBananaTypes = async () => {
@@ -113,12 +116,20 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const handleBillCreated = (newBill) => {
+  const handleBillCreated = (newBill, options = {}) => {
+    setAutoSendWhatsApp(Boolean(options.sendWhatsApp));
     setInvoiceMode('print');
     setActiveInvoice(newBill);
     fetchStats();
     fetchWalkinCount();
   };
+
+  // Non-blocking toast used by save-and-print WhatsApp results.
+  useEffect(() => {
+    if (!toast) return undefined;
+    const timer = setTimeout(() => setToast(null), 6000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   const handleOpenInvoicePreview = (bill) => {
     setInvoiceMode('preview');
@@ -192,12 +203,39 @@ export default function App() {
         </p>
       </footer>
 
+      {/* Non-blocking notification for WhatsApp send results */}
+      {toast && (
+        <div
+          className={`no-print fixed bottom-5 right-5 z-[60] max-w-sm px-4 py-3 rounded-xl shadow-xl border text-xs font-semibold flex items-start gap-2 ${
+            toast.type === 'success'
+              ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+              : toast.type === 'error'
+              ? 'bg-red-50 border-red-300 text-red-700'
+              : 'bg-amber-50 border-amber-300 text-amber-800'
+          }`}
+        >
+          <MessageCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <span>{toast.message}</span>
+          <button
+            type="button"
+            onClick={() => setToast(null)}
+            className="ml-1 opacity-60 hover:opacity-100"
+            aria-label="Dismiss"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Printable Invoice Modal / Overlay */}
       {activeInvoice && (
         <PrintableInvoice
+          key={activeInvoice.id || activeInvoice.bill_number}
           bill={activeInvoice}
           mode={invoiceMode}
           settings={settings}
+          autoSendWhatsApp={autoSendWhatsApp}
+          onWhatsAppResult={(result) => setToast({ ...result, id: Date.now() })}
           onClose={() => setActiveInvoice(null)}
         />
       )}

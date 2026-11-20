@@ -581,6 +581,7 @@ ipcMain.handle('whatsapp:get-status', () => whatsapp.getStatus());
 ipcMain.handle('whatsapp:connect', () => whatsapp.connect());
 ipcMain.handle('whatsapp:disconnect', () => whatsapp.disconnect());
 ipcMain.handle('whatsapp:send-bill', (event, payload) => whatsapp.sendBillPdf(payload));
+ipcMain.handle('whatsapp:send-text', (event, payload) => whatsapp.sendText(payload));
 
 // ---------------------------------------------------------------
 // App lifecycle

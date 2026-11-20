@@ -232,6 +232,35 @@ async function sendBillPdf({ phone, filePath, caption } = {}) {
   return { success: true, messageId: result?.id?.id || '' };
 }
 
+// Send a plain text message (used for bill cancellation notices).
+async function sendText({ phone, message } = {}) {
+  if (!client || state.status !== 'ready') {
+    throw new Error('WhatsApp is not connected. Open Settings and scan the QR code first.');
+  }
+
+  const normalizedPhone = normalizePhone(phone);
+  if (!normalizedPhone) {
+    throw new Error('Invalid customer WhatsApp number. Enter a 10-digit Indian mobile number.');
+  }
+
+  const owner = ownerInfo();
+  if (!owner.configured) {
+    throw new Error('Add the owner WhatsApp number in Settings before sending messages.');
+  }
+  if (!owner.match) {
+    throw new Error(
+      `The logged-in WhatsApp number (${owner.connected || 'unknown'}) does not match the configured owner number (${owner.configured}).`
+    );
+  }
+
+  const text = String(message || '').trim();
+  if (!text) throw new Error('Message is empty.');
+
+  await client.sendMessage(`${normalizedPhone}@c.us`, text);
+  console.log('[WhatsApp] Text message sent to:', normalizedPhone);
+  return { success: true };
+}
+
 async function shutdown() {
   if (client) {
     try {
@@ -250,6 +279,7 @@ module.exports = {
   connect,
   disconnect,
   sendBillPdf,
+  sendText,
   shutdown,
   normalizePhone
 };

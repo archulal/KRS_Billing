@@ -24,7 +24,14 @@ function numberToWords(amount) {
   return `Rupees ${inWords(num).trim()} Only`;
 }
 
-export default function PrintableInvoice({ bill, onClose, mode = 'print', settings }) {
+export default function PrintableInvoice({
+  bill,
+  onClose,
+  mode = 'print',
+  settings,
+  autoSendWhatsApp = false,
+  onWhatsAppResult
+}) {
   const { lang, t } = useLanguage();
   const [paperSize] = useState('a5'); // fixed to A5 as per requirement
   const [qrDataUrl, setQrDataUrl] = useState('');
@@ -33,6 +40,7 @@ export default function PrintableInvoice({ bill, onClose, mode = 'print', settin
   const [printStatus, setPrintStatus] = useState(null);
   const [waStatus, setWaStatus] = useState(null);
   const receiptRef = useRef(null);
+  const waSendGuard = useRef(null);
 
   const isElectron = typeof window !== 'undefined' && !!window.electronAPI;
 
@@ -82,11 +90,24 @@ export default function PrintableInvoice({ bill, onClose, mode = 'print', settin
     }
   }, [bill]);
 
-  // 4️⃣ POS flow only: print automatically as soon as the invoice is ready.
+  // 4️⃣ POS flow only: optionally send on WhatsApp, then print automatically.
   // History preview mode never auto-prints — the user decides.
   useEffect(() => {
-    if (mode !== 'print' || customerName === null || printerName === null) return;
-    const timer = setTimeout(() => {
+    if (mode !== 'print' || customerName === null || printerName === null) return undefined;
+
+    let cancelled = false;
+    const run = async () => {
+      if (autoSendWhatsApp) {
+        const guardKey = `${bill?.id || ''}-${bill?.bill_number || ''}`;
+        if (waSendGuard.current !== guardKey) {
+          waSendGuard.current = guardKey;
+          const result = await sendWhatsAppPdf();
+          if (onWhatsAppResult) onWhatsAppResult(result);
+        }
+      }
+
+      if (cancelled) return;
+
       if (window.electronAPI?.printSilent) {
         window.electronAPI.printSilent({ printer: printerName, pageSize: paperSize.toUpperCase() })
           .then(res => console.log('Silent print result →', res))
@@ -97,9 +118,14 @@ export default function PrintableInvoice({ bill, onClose, mode = 'print', settin
         window.print();
         onClose && onClose();
       }
-    }, 200);
-    return () => clearTimeout(timer);
-  }, [mode, printerName, customerName, onClose, paperSize]);
+    };
+
+    const timer = setTimeout(run, 200);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [mode, printerName, customerName, onClose, paperSize, autoSendWhatsApp]);
 
   // 5️⃣ Preview flow: print on demand from the preview toolbar.
   const handleManualPrint = async () => {
@@ -137,20 +163,17 @@ export default function PrintableInvoice({ bill, onClose, mode = 'print', settin
       .replace(/\{customer\}/g, customerName || t('customer'));
   };
 
-  const handleSendWhatsApp = async () => {
-    if (!window.electronAPI?.whatsapp || !window.electronAPI?.generateBillPdf) {
-      setWaStatus({ type: 'error', message: t('waDesktopOnly') });
-      return;
-    }
-
-    let phone = (bill.customer_phone || '').trim();
+  // Shared by the preview button and the Save & Print checkbox.
+  // A bill without a customer number is skipped with a clear notice.
+  const sendWhatsAppPdf = async () => {
+    const phone = (bill?.customer_phone || '').trim();
     if (!phone) {
-      const entered = window.prompt(t('waNoPhone'), '');
-      if (!entered || !entered.trim()) return;
-      phone = entered.trim();
+      return { type: 'warning', message: t('waNoNumberSkipped') };
+    }
+    if (!window.electronAPI?.whatsapp || !window.electronAPI?.generateBillPdf) {
+      return { type: 'error', message: t('waDesktopOnly') };
     }
 
-    setWaStatus({ type: 'info', message: t('waSending') });
     try {
       const pdf = await window.electronAPI.generateBillPdf({ billNumber: bill.bill_number });
       if (!pdf?.success) {
@@ -164,11 +187,16 @@ export default function PrintableInvoice({ bill, onClose, mode = 'print', settin
       });
 
       if (!result?.success) throw new Error(result?.error || t('waSettingsError'));
-      setWaStatus({ type: 'success', message: t('waSent') });
+      return { type: 'success', message: t('waSent') };
     } catch (err) {
       console.error('WhatsApp send error →', err);
-      setWaStatus({ type: 'error', message: err.message || t('waSettingsError') });
+      return { type: 'error', message: err.message || t('waSettingsError') };
     }
+  };
+
+  const handleSendWhatsApp = async () => {
+    setWaStatus({ type: 'info', message: t('waSending') });
+    setWaStatus(await sendWhatsAppPdf());
   };
 
   if (!bill) return null;
@@ -388,10 +416,12 @@ export default function PrintableInvoice({ bill, onClose, mode = 'print', settin
                     ? 'text-emerald-700'
                     : activeStatus.type === 'error'
                     ? 'text-red-600'
+                    : activeStatus.type === 'warning'
+                    ? 'text-amber-700'
                     : 'text-slate-600'
                 }`}>
                   {activeStatus.type === 'success' && <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" />}
-                  {activeStatus.type === 'error' && <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />}
+                  {(activeStatus.type === 'error' || activeStatus.type === 'warning') && <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />}
                   {activeStatus.type === 'info' && <Loader2 className="w-3.5 h-3.5 shrink-0 mt-0.5 animate-spin" />}
                   <span>{activeStatus.message}</span>
                 </span>

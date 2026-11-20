@@ -24,6 +24,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     connect: () => ipcRenderer.invoke('whatsapp:connect'),
     disconnect: () => ipcRenderer.invoke('whatsapp:disconnect'),
     sendBill: (payload) => ipcRenderer.invoke('whatsapp:send-bill', payload),
+    sendText: (payload) => ipcRenderer.invoke('whatsapp:send-text', payload),
     onStatus: (callback) => {
       const listener = (_event, status) => callback(status);
       ipcRenderer.on('whatsapp:status', listener);

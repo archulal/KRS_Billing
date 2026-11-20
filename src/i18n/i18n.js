@@ -168,7 +168,13 @@ export const translations = {
     waSend: "Send on WhatsApp",
     waSending: "Generating PDF and sending on WhatsApp...",
     waSent: "Bill PDF sent on WhatsApp.",
-    waNoPhone: "This bill has no customer phone number. Enter the WhatsApp number to send the bill:",
+    waNoPhone: "This bill has no customer phone number.",
+    waSendOnSave: "Send PDF on WhatsApp after saving",
+    waNoNumberSkipped: "Not sent on WhatsApp — this bill has no customer phone number.",
+    waCancelMessageSent: "Cancellation message sent on WhatsApp.",
+    waCancelSendFailed: "Bill cancelled, but the WhatsApp message could not be sent.",
+    waCancelNoNumberSkipped: "Bill cancelled. No WhatsApp message sent — no customer phone number.",
+    confirmCancelBill: "Cancel this bill? This cannot be undone.",
     waSettingsError: "Could not save settings.",
 
     // Common / Notifications
@@ -346,7 +352,13 @@ export const translations = {
     waSend: "വാട്ട്സ്ആപ്പിൽ അയക്കുക",
     waSending: "PDF തയ്യാറാക്കി വാട്ട്സ്ആപ്പിൽ അയക്കുന്നു...",
     waSent: "ബിൽ PDF വാട്ട്സ്ആപ്പിൽ അയച്ചു.",
-    waNoPhone: "ഈ ബില്ലിൽ ഉപഭോക്താവിന്റെ ഫോൺ നമ്പർ ഇല്ല. ബിൽ അയക്കാൻ വാട്ട്സ്ആപ്പ് നമ്പർ നൽകുക:",
+    waNoPhone: "ഈ ബില്ലിൽ ഉപഭോക്താവിന്റെ ഫോൺ നമ്പർ ഇല്ല.",
+    waSendOnSave: "സേവ് ചെയ്തതിന് ശേഷം PDF വാട്ട്സ്ആപ്പിൽ അയക്കുക",
+    waNoNumberSkipped: "വാട്ട്സ്ആപ്പിൽ അയച്ചില്ല — ഈ ബില്ലിൽ ഉപഭോക്താവിന്റെ ഫോൺ നമ്പർ ഇല്ല.",
+    waCancelMessageSent: "റദ്ദാക്കൽ സന്ദേശം വാട്ട്സ്ആപ്പിൽ അയച്ചു.",
+    waCancelSendFailed: "ബിൽ റദ്ദാക്കി, എന്നാൽ വാട്ട്സ്ആപ്പ് സന്ദേശം അയക്കാൻ കഴിഞ്ഞില്ല.",
+    waCancelNoNumberSkipped: "ബിൽ റദ്ദാക്കി. ഫോൺ നമ്പർ ഇല്ലാത്തതിനാൽ വാട്ട്സ്ആപ്പ് സന്ദേശം അയച്ചില്ല.",
+    confirmCancelBill: "ഈ ബിൽ റദ്ദാക്കണോ? ഇത് പഴയപടിയാക്കാൻ കഴിയില്ല.",
     waSettingsError: "ക്രമീകരണങ്ങൾ സേവ് ചെയ്യാൻ കഴിഞ്ഞില്ല.",
 
     // Common / Notifications
