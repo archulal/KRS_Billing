@@ -77,6 +77,11 @@ input[type="number"] {
   /* 3. Strip overlay styling from invoice modal so only receipt prints */
   .invoice-modal-container {
     position: static !important;
+    left: auto !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    z-index: auto !important;
     display: block !important;
     background: transparent !important;
     padding: 0 !important;
@@ -85,6 +90,7 @@ input[type="number"] {
     height: auto !important;
     overflow: visible !important;
     box-shadow: none !important;
+    backdrop-filter: none !important;
   }
 
   .invoice-modal-dialog {
@@ -93,8 +99,10 @@ input[type="number"] {
     box-shadow: none !important;
     border: none !important;
     border-radius: 0 !important;
+    width: 100% !important;
     max-width: 100% !important;
     max-height: none !important;
+    height: auto !important;
     overflow: visible !important;
     padding: 0 !important;
     margin: 0 !important;

@@ -1,5 +1,6 @@
 // src/components/PrintableInvoice.jsx
 import React, { useState, useEffect, useRef } from 'react';
+import { Printer, X, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import QRCode from 'qrcode';
 import krsLogoPrint from '../assets/krs_banana_tree.png';
@@ -23,39 +24,51 @@ function numberToWords(amount) {
   return `Rupees ${inWords(num).trim()} Only`;
 }
 
-export default function PrintableInvoice({ bill, onClose }) {
+export default function PrintableInvoice({ bill, onClose, mode = 'print' }) {
   const { lang, t } = useLanguage();
   const [paperSize] = useState('a5'); // fixed to A5 as per requirement
   const [qrDataUrl, setQrDataUrl] = useState('');
-  const [printerName, setPrinterName] = useState('');
+  const [printerName, setPrinterName] = useState(null);
   const [customerName, setCustomerName] = useState(null);
+  const [printStatus, setPrintStatus] = useState(null);
   const receiptRef = useRef(null);
+
+  const isElectron = typeof window !== 'undefined' && !!window.electronAPI;
 
   // 1️⃣ Get default printer (fallback to first available)
   useEffect(() => {
     (async () => {
       try {
+        if (!window.electronAPI?.listPrinters) {
+          setPrinterName('');
+          return;
+        }
         const printers = await window.electronAPI.listPrinters();
         const def = printers.find(p => p.isDefault) || printers[0];
         setPrinterName(def?.name || '');
       } catch (e) {
         console.error('Printer enumeration error →', e);
+        setPrinterName('');
       }
     })();
   }, []);
 
-  // 2️⃣ Prompt for walk‑in customer name if missing
+  // 2️⃣ Resolve customer name (prompt only for POS direct print)
   useEffect(() => {
     if (customerName !== null) return; // already set
     const existing = bill?.customer_display_name || bill?.customer_name;
-    if (!existing) {
-      const input = window.prompt('Enter walk‑in customer name:');
-      const name = input && input.trim() ? input.trim() : 'Walk‑In';
-      setCustomerName(name);
-    } else {
+    if (existing) {
       setCustomerName(existing);
+      return;
     }
-  }, [bill, customerName]);
+    if (mode !== 'print') {
+      setCustomerName('Walk-In');
+      return;
+    }
+    const input = window.prompt('Enter walk‑in customer name:');
+    const name = input && input.trim() ? input.trim() : 'Walk‑In';
+    setCustomerName(name);
+  }, [bill, customerName, mode]);
 
   // 3️⃣ Generate QR code (black/white)
   useEffect(() => {
@@ -68,18 +81,48 @@ export default function PrintableInvoice({ bill, onClose }) {
     }
   }, [bill]);
 
-  // 4️⃣ Trigger silent print when ready
+  // 4️⃣ POS flow only: print automatically as soon as the invoice is ready.
+  // History preview mode never auto-prints — the user decides.
   useEffect(() => {
-    if (!printerName || customerName === null) return;
+    if (mode !== 'print' || customerName === null || printerName === null) return;
     const timer = setTimeout(() => {
-      const opts = { deviceName: printerName, pageSize: 'A5' };
-      window.electronAPI.printSilent(opts)
-        .then(res => console.log('Silent print result →', res))
-        .catch(err => console.error('Silent print error →', err))
-        .finally(() => onClose && onClose());
+      if (window.electronAPI?.printSilent) {
+        window.electronAPI.printSilent({ printer: printerName, pageSize: paperSize.toUpperCase() })
+          .then(res => console.log('Silent print result →', res))
+          .catch(err => console.error('Silent print error →', err))
+          .finally(() => onClose && onClose());
+      } else {
+        // Web POS fallback: use the browser print dialog.
+        window.print();
+        onClose && onClose();
+      }
     }, 200);
     return () => clearTimeout(timer);
-  }, [printerName, customerName, onClose]);
+  }, [mode, printerName, customerName, onClose, paperSize]);
+
+  // 5️⃣ Preview flow: print on demand from the preview toolbar.
+  const handleManualPrint = async () => {
+    setPrintStatus({ type: 'info', message: t('sendingToPrinter') });
+    try {
+      if (window.electronAPI?.printSilent) {
+        const result = await window.electronAPI.printSilent({
+          printer: printerName || undefined,
+          pageSize: paperSize.toUpperCase(),
+        });
+        if (result?.success) {
+          setPrintStatus({ type: 'success', message: t('sentToPrinter') });
+        } else {
+          setPrintStatus({ type: 'error', message: result?.failureReason || t('printFailed') });
+        }
+      } else {
+        setPrintStatus(null);
+        window.print();
+      }
+    } catch (err) {
+      console.error('Manual print error →', err);
+      setPrintStatus({ type: 'error', message: err.message || t('printFailed') });
+    }
+  };
 
   if (!bill) return null;
 
@@ -87,9 +130,7 @@ export default function PrintableInvoice({ bill, onClose }) {
     ? new Date(bill.date).toLocaleString(lang === 'ml' ? 'ml-IN' : 'en-IN', { dateStyle: 'medium', timeStyle: 'short' })
     : new Date().toLocaleString();
 
-  // Off‑screen receipt (no UI preview)
-  return (
-    <div ref={receiptRef} style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+  const renderReceipt = () => (
       <div
         id="printable-receipt"
         className={`print-area size-${paperSize} bg-white text-black border border-black shadow-xl ${paperSize === 'a5'
@@ -255,6 +296,92 @@ export default function PrintableInvoice({ bill, onClose }) {
           <div className="text-center mt-1 text-[7.5px] italic">{t('thankYou')}</div>
         </div>
       </div>
+  );
+
+  // History flow: show the invoice first, print only when asked.
+  if (mode === 'preview') {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/70 backdrop-blur-sm invoice-modal-container">
+        <div className="bg-white rounded-2xl shadow-2xl border border-emerald-200 w-full max-w-3xl max-h-[94vh] flex flex-col overflow-hidden invoice-modal-dialog">
+
+          {/* Preview Toolbar */}
+          <div className="no-print bg-gradient-to-r from-emerald-950 via-[#156b46] to-emerald-900 px-5 py-3.5 text-white flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2.5">
+              <FileText className="w-5 h-5 text-emerald-200" />
+              <div>
+                <h3 className="font-bold text-base leading-tight">{t('invoicePreviewTitle')}</h3>
+                <p className="text-[11px] text-emerald-100/90 font-mono mt-0.5">{bill.bill_number}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-all"
+              title={t('closePreview')}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Invoice Preview */}
+          <div className="invoice-scroll-area flex-1 overflow-auto bg-slate-300/70 p-3 sm:p-5 flex justify-center">
+            <div className="shrink-0 shadow-2xl">
+              {renderReceipt()}
+            </div>
+          </div>
+
+          {/* Preview Actions */}
+          <div className="no-print bg-slate-50 border-t border-slate-200 px-4 sm:px-5 py-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 shrink-0">
+            <div className="text-[11px] font-medium min-h-[16px]">
+              {printStatus ? (
+                <span className={`inline-flex items-center gap-1.5 ${
+                  printStatus.type === 'success'
+                    ? 'text-emerald-700'
+                    : printStatus.type === 'error'
+                    ? 'text-red-600'
+                    : 'text-slate-600'
+                }`}>
+                  {printStatus.type === 'success' && <CheckCircle2 className="w-3.5 h-3.5" />}
+                  {printStatus.type === 'error' && <AlertCircle className="w-3.5 h-3.5" />}
+                  {printStatus.message}
+                </span>
+              ) : (
+                <span className="text-slate-500">
+                  {isElectron ? '' : t('browserPrintHint')}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded-lg transition-all"
+              >
+                {t('closePreview')}
+              </button>
+              <button
+                type="button"
+                onClick={handleManualPrint}
+                className="px-5 py-2.5 bg-[#156b46] hover:bg-[#125839] active:bg-[#0e482e] text-white font-black text-xs rounded-xl shadow-md shadow-emerald-900/25 transition-all flex items-center justify-center gap-2"
+              >
+                <Printer className="w-4 h-4" />
+                <span>{t('printInvoiceNow')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // POS flow: keep the receipt off-screen and auto-print.
+  return (
+    <div
+      ref={receiptRef}
+      className="invoice-modal-container"
+      style={{ position: 'absolute', left: '-9999px', top: 0 }}
+    >
+      {renderReceipt()}
     </div>
   );
 }

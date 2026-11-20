@@ -244,6 +244,15 @@ async function prepareInvoiceForPrinting(contents, requestedSize) {
       let parent = receipt.parentElement;
 
       while (parent && parent !== document.body) {
+        // Remember the original inline style once so it can be restored
+        // after printing (the invoice preview must stay usable).
+        if (!parent.hasAttribute('data-krs-original-style')) {
+          parent.setAttribute(
+            'data-krs-original-style',
+            parent.getAttribute('style') || ''
+          );
+        }
+
         parent.style.setProperty('visibility', 'visible', 'important');
         parent.style.setProperty('display', 'block', 'important');
         parent.style.setProperty('overflow', 'visible', 'important');
@@ -488,6 +497,23 @@ ipcMain.handle('print-silent', async (event, options = {}) => {
             if (style) {
               style.remove();
             }
+
+            // Restore any layout changes made for printing.
+            document
+              .querySelectorAll('[data-krs-original-style]')
+              .forEach((element) => {
+                const original = element.getAttribute(
+                  'data-krs-original-style'
+                );
+
+                if (original) {
+                  element.setAttribute('style', original);
+                } else {
+                  element.removeAttribute('style');
+                }
+
+                element.removeAttribute('data-krs-original-style');
+              });
           })();
         `);
 

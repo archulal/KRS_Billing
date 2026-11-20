@@ -180,6 +180,9 @@ function initDatabase() {
   }
 }
 
+// Create tables and seed defaults on first run (idempotent)
+initDatabase();
+
 // Migration: add `status` column to `bills` if it doesn't exist
 try {
   const cols = db.prepare("PRAGMA table_info('bills')").all();

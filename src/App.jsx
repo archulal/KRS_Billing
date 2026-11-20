@@ -15,6 +15,7 @@ export default function App() {
   const [permanentCustomers, setPermanentCustomers] = useState([]);
   const [stats, setStats] = useState(null);
   const [activeInvoice, setActiveInvoice] = useState(null);
+  const [invoiceMode, setInvoiceMode] = useState('print'); // 'print' (POS direct print) | 'preview' (history)
   const [frequentCount, setFrequentCount] = useState(0);
 
   // Fetch initial data
@@ -96,9 +97,15 @@ export default function App() {
   }, []);
 
   const handleBillCreated = (newBill) => {
+    setInvoiceMode('print');
     setActiveInvoice(newBill);
     fetchStats();
     fetchWalkinCount();
+  };
+
+  const handleOpenInvoicePreview = (bill) => {
+    setInvoiceMode('preview');
+    setActiveInvoice(bill);
   };
 
   return (
@@ -132,7 +139,7 @@ export default function App() {
 
         {activeTab === 'history' && (
           <BillsHistoryScreen
-            onSelectBillForPrint={(bill) => setActiveInvoice(bill)}
+            onSelectBillForPrint={handleOpenInvoicePreview}
           />
         )}
 
@@ -165,6 +172,7 @@ export default function App() {
       {activeInvoice && (
         <PrintableInvoice
           bill={activeInvoice}
+          mode={invoiceMode}
           onClose={() => setActiveInvoice(null)}
         />
       )}
