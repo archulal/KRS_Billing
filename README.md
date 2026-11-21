@@ -64,7 +64,7 @@ Bills can be shared as a PDF directly to a customer's WhatsApp number. The PDF i
 The QR needs scanning only once; the session is stored under the app data folder (`whatsapp-session`).
 
 ### Sending a bill
-- **While billing (POS):** tick **Send PDF on WhatsApp after saving** (on by default when WhatsApp is connected). Saving sends the PDF and then prints the invoice; the result appears in a small toast and never blocks printing.
+- **While billing (POS):** Save & Print now saves the bill and opens the invoice preview. It has two actions: **Send on WhatsApp** and **Print Invoice Now**. Clicking Send opens a confirmation dialog showing the customer number before the PDF is sent. After a successful print the preview closes so you can continue billing.
 - **Bills History:** click the green **Send on WhatsApp** button on a bill, then click **Send on WhatsApp** in the invoice preview.
 - The customer number is taken from the bill (`customer_phone`). If a bill has **no customer phone number**, WhatsApp sending is skipped automatically with a clear notice — printing/cancellation still completes.
 - A successful send shows a confirmation in the preview toolbar.

@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { 
   Plus, Trash2, Printer, RotateCcw, User, Search, Store, 
-  HelpCircle, AlertCircle, CheckCircle2, ChevronDown, Sparkles, Edit, MessageCircle
+  HelpCircle, AlertCircle, CheckCircle2, ChevronDown, Sparkles, Edit
 } from 'lucide-react';
 import WalkInCaptureModal from './WalkInCaptureModal';
 
@@ -96,28 +96,6 @@ export default function BillingScreen({
   const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [sendWhatsAppOnSave, setSendWhatsAppOnSave] = useState(false);
-  const waToggleTouched = useRef(false);
-
-  // Default the WhatsApp checkbox on when the owner account is connected.
-  useEffect(() => {
-    const api = window.electronAPI?.whatsapp;
-    if (!api) return undefined;
-
-    let mounted = true;
-    const applyStatus = (next) => {
-      if (!mounted || waToggleTouched.current) return;
-      setSendWhatsAppOnSave(Boolean(next?.status === 'ready' && next?.match));
-    };
-
-    api.getStatus().then(applyStatus).catch(() => {});
-    const unsubscribe = api.onStatus(applyStatus);
-
-    return () => {
-      mounted = false;
-      if (unsubscribe) unsubscribe();
-    };
-  }, []);
 
   // Initialize with 1 empty row once varieties load
   useEffect(() => {
@@ -294,9 +272,7 @@ export default function BillingScreen({
       setIsWalkInModalOpen(false);
 
       if (refreshStats) refreshStats();
-      if (onBillCreated) {
-        onBillCreated(createdBill, { sendWhatsApp: sendWhatsAppOnSave });
-      }
+      if (onBillCreated) onBillCreated(createdBill);
 
     } catch (err) {
       console.error('Error saving bill:', err);
@@ -778,25 +754,10 @@ export default function BillingScreen({
 
         {/* Large Action Bar */}
         <div className="mt-4 pt-4 border-t border-emerald-700/50 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex flex-col gap-1.5">
-            <div className="text-xs text-emerald-200/90 font-medium">
-              {lang === 'ml' 
-                ? 'F9 അല്ലെങ്കിൽ Ctrl+S അമർത്തി സേവ് ചെയ്ത് പ്രിന്റ് ചെയ്യാം.'
-                : 'Press F9 or Ctrl+S to instantly Save & Print invoice.'}
-            </div>
-            <label className="inline-flex items-center gap-2 w-fit cursor-pointer text-[11px] font-bold text-emerald-100 bg-emerald-900/50 border border-emerald-500/40 rounded-lg px-2.5 py-1.5">
-              <input
-                type="checkbox"
-                checked={sendWhatsAppOnSave}
-                onChange={(e) => {
-                  waToggleTouched.current = true;
-                  setSendWhatsAppOnSave(e.target.checked);
-                }}
-                className="w-3.5 h-3.5 accent-emerald-400"
-              />
-              <MessageCircle className="w-3.5 h-3.5 text-emerald-300" />
-              <span>{t('waSendOnSave')}</span>
-            </label>
+          <div className="text-xs text-emerald-200/90 font-medium">
+            {lang === 'ml'
+              ? 'F9 അല്ലെങ്കിൽ Ctrl+S അമർത്തി ബിൽ സേവ് ചെയ്ത് പ്രിവ്യൂ കാണാം.'
+              : 'Press F9 or Ctrl+S to save the bill and open its preview.'}
           </div>
 
           <button

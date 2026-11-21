@@ -29,8 +29,7 @@ export default function PrintableInvoice({
   onClose,
   mode = 'print',
   settings,
-  autoSendWhatsApp = false,
-  onWhatsAppResult
+  closeAfterPrint = false
 }) {
   const { lang, t } = useLanguage();
   const [paperSize] = useState('a5'); // fixed to A5 as per requirement
@@ -39,8 +38,8 @@ export default function PrintableInvoice({
   const [customerName, setCustomerName] = useState(null);
   const [printStatus, setPrintStatus] = useState(null);
   const [waStatus, setWaStatus] = useState(null);
+  const [showWaConfirm, setShowWaConfirm] = useState(false);
   const receiptRef = useRef(null);
-  const waSendGuard = useRef(null);
 
   const isElectron = typeof window !== 'undefined' && !!window.electronAPI;
 
@@ -90,24 +89,12 @@ export default function PrintableInvoice({
     }
   }, [bill]);
 
-  // 4️⃣ POS flow only: optionally send on WhatsApp, then print automatically.
-  // History preview mode never auto-prints — the user decides.
+  // 4️⃣ POS flow only: print automatically as soon as the invoice is ready.
+  // Preview mode never auto-prints — the user chooses Send or Print first.
   useEffect(() => {
     if (mode !== 'print' || customerName === null || printerName === null) return undefined;
 
-    let cancelled = false;
-    const run = async () => {
-      if (autoSendWhatsApp) {
-        const guardKey = `${bill?.id || ''}-${bill?.bill_number || ''}`;
-        if (waSendGuard.current !== guardKey) {
-          waSendGuard.current = guardKey;
-          const result = await sendWhatsAppPdf();
-          if (onWhatsAppResult) onWhatsAppResult(result);
-        }
-      }
-
-      if (cancelled) return;
-
+    const timer = setTimeout(() => {
       if (window.electronAPI?.printSilent) {
         window.electronAPI.printSilent({ printer: printerName, pageSize: paperSize.toUpperCase() })
           .then(res => console.log('Silent print result →', res))
@@ -118,14 +105,9 @@ export default function PrintableInvoice({
         window.print();
         onClose && onClose();
       }
-    };
-
-    const timer = setTimeout(run, 200);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [mode, printerName, customerName, onClose, paperSize, autoSendWhatsApp]);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [mode, printerName, customerName, onClose, paperSize]);
 
   // 5️⃣ Preview flow: print on demand from the preview toolbar.
   const handleManualPrint = async () => {
@@ -138,12 +120,16 @@ export default function PrintableInvoice({
         });
         if (result?.success) {
           setPrintStatus({ type: 'success', message: t('sentToPrinter') });
+          // POS-originated preview: close after a successful print so the
+          // operator can continue with the next bill.
+          if (closeAfterPrint) onClose && onClose();
         } else {
           setPrintStatus({ type: 'error', message: result?.failureReason || t('printFailed') });
         }
       } else {
         setPrintStatus(null);
         window.print();
+        if (closeAfterPrint) onClose && onClose();
       }
     } catch (err) {
       console.error('Manual print error →', err);
@@ -194,7 +180,10 @@ export default function PrintableInvoice({
     }
   };
 
-  const handleSendWhatsApp = async () => {
+  const handleSendWhatsApp = () => setShowWaConfirm(true);
+
+  const handleConfirmSend = async () => {
+    setShowWaConfirm(false);
     setWaStatus({ type: 'info', message: t('waSending') });
     setWaStatus(await sendWhatsAppPdf());
   };
@@ -524,13 +513,6 @@ export default function PrintableInvoice({
             <div className="flex items-center justify-end gap-2">
               <button
                 type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded-lg transition-all"
-              >
-                {t('closePreview')}
-              </button>
-              <button
-                type="button"
                 onClick={handleSendWhatsApp}
                 disabled={waStatus?.type === 'info'}
                 className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-60 text-white font-black text-xs rounded-xl shadow-md shadow-emerald-900/25 transition-all flex items-center justify-center gap-2"
@@ -553,6 +535,54 @@ export default function PrintableInvoice({
             </div>
           </div>
         </div>
+
+        {/* Confirmation before sending the bill on WhatsApp */}
+        {showWaConfirm && (
+          <div className="no-print fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl border border-emerald-200 w-full max-w-md overflow-hidden">
+              <div className="bg-gradient-to-r from-emerald-950 via-[#156b46] to-emerald-900 px-5 py-3.5 text-white flex items-center gap-2.5">
+                <MessageCircle className="w-5 h-5 text-emerald-200" />
+                <h3 className="font-bold text-base">{t('waConfirmTitle')}</h3>
+              </div>
+              <div className="px-5 py-5 space-y-3">
+                {(() => {
+                  const phone = (bill?.customer_phone || '').trim();
+                  return phone ? (
+                    <p className="text-xs text-slate-700 leading-relaxed">
+                      {t('waConfirmBody')
+                        .replace(/\{bill_number\}/g, bill.bill_number || '')
+                        .replace(/\{phone\}/g, phone)}
+                    </p>
+                  ) : (
+                    <div className="flex items-start gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <span>{t('waConfirmNoNumber')}</span>
+                    </div>
+                  );
+                })()}
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setShowWaConfirm(false)}
+                    className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
+                  >
+                    {t('waConfirmCancel')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmSend}
+                    disabled={!(bill?.customer_phone || '').trim()}
+                    className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-black rounded-xl shadow transition-all flex items-center gap-2"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    {t('waConfirmSend')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
