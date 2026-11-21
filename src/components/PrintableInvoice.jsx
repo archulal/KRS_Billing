@@ -32,6 +32,10 @@ export default function PrintableInvoice({
   closeAfterPrint = false
 }) {
   const { lang, t } = useLanguage();
+  const DEFAULT_UPI_ID = 'Vyapar.178760240373@hdfcbank';
+  const upiId = (settings?.upi_id || DEFAULT_UPI_ID).trim();
+  const whatsappEnabled = settings?.whatsapp_enabled !== 'false';
+  const qrEnabled = settings?.qr_enabled !== 'false';
   const [paperSize] = useState('a5'); // fixed to A5 as per requirement
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [printerName, setPrinterName] = useState(null);
@@ -80,6 +84,10 @@ export default function PrintableInvoice({
 
   // 3️⃣ Generate QR code (black/white) for the remaining balance
   useEffect(() => {
+    if (!qrEnabled) {
+      setQrDataUrl('');
+      return;
+    }
     if (bill?.grand_total != null) {
       const total = Number(bill.grand_total) || 0;
       const paid = Math.min(Math.max(Number(bill.amount_paid) || 0, 0), total);
@@ -91,12 +99,12 @@ export default function PrintableInvoice({
       }
 
       const amt = due.toFixed(2);
-      const upi = `upi://pay?pa=Vyapar.178760240373@hdfcbank&pn=KRS%20Plantain%20Merchant&mc=8999&am=${amt}&cu=INR&tn=Invoice%20${encodeURIComponent(bill.bill_number)}`;
+      const upi = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=KRS%20Plantain%20Merchant&mc=8999&am=${amt}&cu=INR&tn=Invoice%20${encodeURIComponent(bill.bill_number)}`;
       QRCode.toDataURL(upi, { width: 140, margin: 1, errorCorrectionLevel: 'M' })
         .then(setQrDataUrl)
         .catch(err => console.error('QR generation error', err));
     }
-  }, [bill]);
+  }, [bill, qrEnabled, upiId]);
 
   // 4️⃣ POS flow only: print automatically as soon as the invoice is ready.
   // Preview mode never auto-prints — the user chooses Send or Print first.
@@ -161,6 +169,9 @@ export default function PrintableInvoice({
   // Shared by the preview button and the Save & Print checkbox.
   // A bill without a customer number is skipped with a clear notice.
   const sendWhatsAppPdf = async () => {
+    if (!whatsappEnabled) {
+      return { type: 'warning', message: t('waDisabled') };
+    }
     const phone = (bill?.customer_phone || '').trim();
     if (!phone) {
       return { type: 'warning', message: t('waNoNumberSkipped') };
@@ -189,7 +200,13 @@ export default function PrintableInvoice({
     }
   };
 
-  const handleSendWhatsApp = () => setShowWaConfirm(true);
+  const handleSendWhatsApp = () => {
+    if (!whatsappEnabled) {
+      setWaStatus({ type: 'warning', message: t('waDisabled') });
+      return;
+    }
+    setShowWaConfirm(true);
+  };
 
   const handleConfirmSend = async () => {
     setShowWaConfirm(false);
@@ -467,6 +484,11 @@ export default function PrintableInvoice({
                   {lang === 'ml' ? 'തീർപ്പായി' : 'IN FULL'}
                 </span>
               </div>
+            ) : !qrEnabled ? (
+              <div className="w-[72px] h-[72px] shrink-0 rounded-md border border-dashed border-emerald-300 bg-emerald-50 flex flex-col items-center justify-center text-center text-[7px] font-black uppercase tracking-wide" style={{ color: '#047857' }}>
+                <span className="text-lg leading-none">▦</span>
+                <span>{t('qrDisabledOnBill')}</span>
+              </div>
             ) : qrDataUrl ? (
               <div className="border border-emerald-200 p-0.5 bg-white shrink-0">
                 <img src={qrDataUrl} alt="UPI QR" className="w-18 h-18 sm:w-20 sm:h-20 object-contain block" />
@@ -480,20 +502,24 @@ export default function PrintableInvoice({
                   ? (advanceAdjusted > 0
                       ? (lang === 'ml' ? 'അഡ്വാൻസ് ക്രമീകരിച്ചു' : 'Advance adjusted')
                       : (lang === 'ml' ? 'പേയ്മെന്റ് പൂർണ്ണമായി ലഭിച്ചു' : 'Payment received in full'))
-                  : t('scanAndPay')}
+                  : qrEnabled
+                    ? t('scanAndPay')
+                    : t('qrDisabledOnBill')}
               </p>
               {!isFullyPaid && (
                 <p className="font-bold mt-0.5" style={{ color: '#374151' }}>
                   {t('balanceDue')}: <span className="font-mono font-black text-[9px]" style={{ color: '#b45309' }}>₹{balanceDue.toFixed(2)}</span>
                 </p>
               )}
-              {!isFullyPaid && (
-                <p className="font-mono text-[7px] mt-0.5 break-all" style={{ color: '#4b5563' }}>Vyapar.178760240373@hdfcbank</p>
+              {!isFullyPaid && qrEnabled && (
+                <p className="font-mono text-[7px] mt-0.5 break-all" style={{ color: '#4b5563' }}>{upiId}</p>
               )}
               <p className="text-[6.5px] mt-0.5" style={{ color: '#6b7280' }}>
                 {isFullyPaid
                   ? (lang === 'ml' ? 'ബാക്കി തുകയില്ല' : 'No balance remaining')
-                  : t('scanSupportedApps')}
+                  : qrEnabled
+                    ? t('scanSupportedApps')
+                    : t('payByCashOrUpi')}
               </p>
               {advanceBalance > advanceAdjusted && (
                 <p className="text-[6.5px] mt-0.5 font-bold" style={{ color: '#047857' }}>
@@ -668,6 +694,7 @@ export default function PrintableInvoice({
               )}
             </div>
             <div className="flex items-center justify-end gap-2">
+              {whatsappEnabled && (
               <button
                 type="button"
                 onClick={handleSendWhatsApp}
@@ -681,6 +708,7 @@ export default function PrintableInvoice({
                 )}
                 <span>{t('waSend')}</span>
               </button>
+              )}
               <button
                 type="button"
                 onClick={handleManualPrint}
@@ -694,7 +722,7 @@ export default function PrintableInvoice({
         </div>
 
         {/* Confirmation before sending the bill on WhatsApp */}
-        {showWaConfirm && (
+        {showWaConfirm && whatsappEnabled && (
           <div className="no-print fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
             <div className="bg-white rounded-2xl shadow-2xl border border-emerald-200 w-full max-w-md overflow-hidden">
               <div className="bg-gradient-to-r from-emerald-950 via-[#156b46] to-emerald-900 px-5 py-3.5 text-white flex items-center gap-2.5">

@@ -14,10 +14,11 @@ Built with **Electron**, **React (Vite)**, **Tailwind CSS**, **Node.js + Express
 - **Theme**: Styled in the signature **Emerald Jade / Plantain Green** palette (`#156b46`) matching the physical KRS outdoor signboard.
 - **Banana Tree Emblem**: Hand-stamped Kerala banana tree with bunch (വാഴക്കുല & വാഴച്ചുണ്ട്) featured on the desktop header and printed invoices.
 - **Bilingual Interface**: Seamless toggle between **English** and **മലയാളം** for screen UI and printed receipts.
+- **Configurable billing options**: Set the UPI ID used by the payment QR, switch the UPI QR on/off on bills, and switch all WhatsApp sending buttons on/off from **Settings**.
 
 ### 2. A4 Half Size Invoicing & Dynamic UPI QR Code
 - **A4 Half Size (A5: 148 × 210 mm) Default**: Optimized for continuous ink-tank printers like **Canon PIXMA G3000 series**.
-- **Dynamic "Scan & Pay" QR Code**: Pre-fills the exact bill amount, invoice number, and HDFC Vyapar UPI VPA (`Vyapar.178760240373@hdfcbank`). Scannable by Google Pay, PhonePe, Paytm, BHIM, and all UPI apps.
+- **Dynamic "Scan & Pay" QR Code**: Pre-fills the exact bill amount due, invoice number, and the UPI VPA configured in **Settings → Billing options**. Scannable by Google Pay, PhonePe, Paytm, BHIM, and all UPI apps. The QR can be hidden from printed bills with a toggle.
 - **Order Notice**: Replaced generic terms with **"🍃 Banana Leaves are sold based on order"** / **"🍃 വാഴയിലകൾ ഓർഡർ അനുസരിച്ച് നൽകുന്നതാണ്"**.
 
 ### 3. Stem & Bunch Waste Live Calculations
@@ -71,7 +72,7 @@ Bills can be shared as a PDF directly to a customer's WhatsApp number. The PDF i
    WhatsApp → **Settings → Linked devices → Link a device**.
 5. When the status shows **Connected**, confirm the logged-in number matches the configured owner number. Sending is blocked if they differ.
 
-The QR needs scanning only once; the session is stored under the app data folder (`whatsapp-session`).
+The QR needs scanning only once; the session is stored under the app data folder (`whatsapp-session`). If you change the owner number and save, the old session is cleared automatically and a **new QR code appears in Settings** — scan it with the new number.
 
 ### Sending a bill
 - **While billing (POS):** Save & Print now saves the bill and opens the invoice preview. It has two actions: **Send on WhatsApp** and **Print Invoice Now**. Clicking Send opens a confirmation dialog showing the customer number before the PDF is sent. After a successful print the preview closes so you can continue billing.

@@ -25,8 +25,9 @@ const inr = (value) => {
 
 const round2 = (value) => Math.round((Number(value) || 0) * 100) / 100;
 
-export default function CustomerLedger({ customer, onClose, onLedgerChanged }) {
+export default function CustomerLedger({ customer, settings, onClose, onLedgerChanged }) {
   const { lang, t } = useLanguage();
+  const whatsappEnabled = settings?.whatsapp_enabled !== 'false';
 
   const [ledger, setLedger] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -276,6 +277,10 @@ export default function CustomerLedger({ customer, onClose, onLedgerChanged }) {
   };
 
   const handleSendWhatsApp = async () => {
+    if (!whatsappEnabled) {
+      showNotice('warning', t('waDisabled'));
+      return;
+    }
     setShowWaConfirm(false);
     const phone = (activeCustomer.phone || '').trim();
     if (!phone) {
@@ -361,6 +366,7 @@ export default function CustomerLedger({ customer, onClose, onLedgerChanged }) {
                 <Printer className="w-4 h-4" />
                 <span className="hidden sm:inline">{t('printLedger')}</span>
               </button>
+              {whatsappEnabled && (
               <button
                 type="button"
                 onClick={() => setShowWaConfirm(true)}
@@ -369,6 +375,7 @@ export default function CustomerLedger({ customer, onClose, onLedgerChanged }) {
                 <MessageCircle className="w-4 h-4" />
                 <span className="hidden sm:inline">{t('sendLedgerOnWhatsApp')}</span>
               </button>
+              )}
               <button
                 type="button"
                 onClick={onClose}
@@ -927,7 +934,7 @@ export default function CustomerLedger({ customer, onClose, onLedgerChanged }) {
       )}
 
       {/* ---------------- WHATSAPP CONFIRM ---------------- */}
-      {showWaConfirm && (
+      {showWaConfirm && whatsappEnabled && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl ring-1 ring-slate-900/10 w-full max-w-sm overflow-hidden">
             <div className="p-5 text-center">

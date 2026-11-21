@@ -295,7 +295,10 @@ try {
 const SETTING_DEFAULTS = {
   whatsapp_owner_number: '',
   whatsapp_message_template:
-    'KRS Plantain Merchant & Commission Agent\nBill {bill_number}\nAmount: {amount}\nPlease find the attached PDF bill.\nThank you!'
+    'KRS Plantain Merchant & Commission Agent\nBill {bill_number}\nAmount: {amount}\nPlease find the attached PDF bill.\nThank you!',
+  upi_id: 'Vyapar.178760240373@hdfcbank',
+  whatsapp_enabled: 'true',
+  qr_enabled: 'true'
 };
 
 function getSetting(key, fallback = '') {

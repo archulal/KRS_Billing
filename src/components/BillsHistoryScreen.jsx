@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { History, Search, Calendar, Printer, FileText, TrendingUp, ShoppingBag, Weight, MessageCircle, CheckCircle2, AlertCircle, X } from 'lucide-react';
 
-export default function BillsHistoryScreen({ onSelectBillForPrint }) {
+export default function BillsHistoryScreen({ onSelectBillForPrint, settings }) {
   const { lang, t } = useLanguage();
+  const whatsappEnabled = settings?.whatsapp_enabled !== 'false';
   const [bills, setBills] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
@@ -70,6 +71,11 @@ export default function BillsHistoryScreen({ onSelectBillForPrint }) {
       setBills((prev) =>
         prev.map((b) => (b.id === updated.id ? { ...b, ...updated } : b))
       );
+
+      if (!whatsappEnabled) {
+        setCancelNotice({ type: 'warning', message: t('waDisabled') });
+        return;
+      }
 
       const phone = (bill?.customer_phone || '').trim();
       if (!phone) {
@@ -292,6 +298,7 @@ export default function BillsHistoryScreen({ onSelectBillForPrint }) {
                           <Printer className="w-3.5 h-3.5 text-amber-700" />
                           <span>{t('printInvoice')}</span>
                         </button>
+                        {whatsappEnabled && (
                         <button
                           type="button"
                           onClick={() => handlePrintClick(b.id)}
@@ -301,6 +308,7 @@ export default function BillsHistoryScreen({ onSelectBillForPrint }) {
                           <MessageCircle className="w-3.5 h-3.5 text-emerald-700" />
                           <span>{t('waSend')}</span>
                         </button>
+                        )}
                         {b.status !== 'cancelled' && (
                           <button
                             type="button"

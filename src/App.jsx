@@ -164,6 +164,7 @@ export default function App() {
         {activeTab === 'history' && (
           <BillsHistoryScreen
             onSelectBillForPrint={handleOpenInvoicePreview}
+            settings={settings}
           />
         )}
 
@@ -217,6 +218,7 @@ export default function App() {
         <CustomerLedger
           key={ledgerCustomer.id}
           customer={ledgerCustomer}
+          settings={settings}
           onClose={() => setLedgerCustomer(null)}
           onLedgerChanged={fetchPermanentCustomers}
         />

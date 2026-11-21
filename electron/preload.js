@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getStatus: () => ipcRenderer.invoke('whatsapp:get-status'),
     connect: () => ipcRenderer.invoke('whatsapp:connect'),
     disconnect: () => ipcRenderer.invoke('whatsapp:disconnect'),
+    resetSession: () => ipcRenderer.invoke('whatsapp:reset-session'),
     sendBill: (payload) => ipcRenderer.invoke('whatsapp:send-bill', payload),
     sendText: (payload) => ipcRenderer.invoke('whatsapp:send-text', payload),
     onStatus: (callback) => {

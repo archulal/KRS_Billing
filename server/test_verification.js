@@ -351,6 +351,35 @@ async function runTests() {
     }
     console.log('  - Advance ₹500 adjusted against bill, cash collected ₹500, no dues shown in history.');
 
+    // 5e. Settings: UPI id and feature toggles
+    const initialSettings = await request('GET', '/api/settings');
+    if (
+      initialSettings.data.upi_id !== 'Vyapar.178760240373@hdfcbank' ||
+      initialSettings.data.whatsapp_enabled !== 'true' ||
+      initialSettings.data.qr_enabled !== 'true'
+    ) {
+      throw new Error(`Unexpected default settings: ${JSON.stringify(initialSettings.data)}`);
+    }
+
+    const savedSettings = await request('PUT', '/api/settings', {
+      upi_id: 'merchant.test@upi',
+      whatsapp_enabled: false,
+      qr_enabled: false,
+    });
+    if (
+      savedSettings.data.upi_id !== 'merchant.test@upi' ||
+      savedSettings.data.whatsapp_enabled !== 'false' ||
+      savedSettings.data.qr_enabled !== 'false'
+    ) {
+      throw new Error(`Settings were not saved/typed correctly: ${JSON.stringify(savedSettings.data)}`);
+    }
+    await request('PUT', '/api/settings', {
+      upi_id: 'Vyapar.178760240373@hdfcbank',
+      whatsapp_enabled: true,
+      qr_enabled: true,
+    });
+    console.log('  - UPI id, WhatsApp toggle and QR toggle saved as settings.');
+
     // 6. Production mode must NOT seed demo customers
     const prodDir = fs.mkdtempSync(path.join(os.tmpdir(), 'krs-prod-'));
     try {

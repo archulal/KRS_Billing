@@ -24,6 +24,10 @@ function dbSettings() {
   return require('../server/db');
 }
 
+function sessionDir() {
+  return path.join(app.getPath('userData'), 'whatsapp-session');
+}
+
 function setWindow(window) {
   mainWindow = window;
 }
@@ -96,7 +100,7 @@ async function connect() {
 
   try {
     const { Client, LocalAuth } = loadWhatsAppWeb();
-    const sessionPath = path.join(app.getPath('userData'), 'whatsapp-session');
+    const sessionPath = sessionDir();
 
     const puppeteer = {
       headless: true,
@@ -199,6 +203,31 @@ async function disconnect() {
   return getStatus();
 }
 
+// Called after the owner WhatsApp number changes. The old LocalAuth session
+// belongs to the previous number, so it must be cleared before reconnecting;
+// whatsapp-web.js will then emit a fresh QR code for the new number.
+async function resetSession() {
+  if (client) {
+    // Ignore the expected disconnect event from the old client so it cannot
+    // overwrite the "initializing" / "qr" state of the new client.
+    client.removeAllListeners('disconnected');
+  }
+  await disconnect();
+
+  try {
+    fs.rmSync(sessionDir(), { recursive: true, force: true });
+  } catch (err) {
+    console.error('[WhatsApp] Could not clear old session:', err);
+  }
+
+  setStatus({ status: 'idle', number: '', qr: '', error: '' });
+
+  const configured = normalizePhone(dbSettings().getSetting('whatsapp_owner_number'));
+  if (!configured) return getStatus();
+
+  return connect();
+}
+
 async function sendBillPdf({ phone, filePath, caption } = {}) {
   if (!client || state.status !== 'ready') {
     throw new Error('WhatsApp is not connected. Open Settings and scan the QR code first.');
@@ -278,6 +307,7 @@ module.exports = {
   autoConnect,
   connect,
   disconnect,
+  resetSession,
   sendBillPdf,
   sendText,
   shutdown,
