@@ -197,54 +197,56 @@ export default function CustomersScreen({
   const frequentWalkinsCount = walkinCustomers.filter((w) => w.visit_count >= 3).length;
 
   return (
-    <div className="space-y-4">
-      
+    <div className="space-y-5">
+
       {/* Toast Notification */}
       {notification && (
-        <div className={`p-4 rounded-xl text-xs font-bold flex items-center justify-between shadow-lg ${
-          notification.type === 'success' 
-            ? 'bg-leaf-600 text-white' 
-            : 'bg-red-600 text-white'
+        <div className={`p-4 rounded-2xl text-sm font-semibold flex items-center justify-between shadow-lg animate-in fade-in slide-in-from-top-2 duration-200 ${
+          notification.type === 'success'
+            ? 'bg-gradient-to-r from-[#156b46] to-emerald-800 text-white ring-1 ring-emerald-700/50'
+            : 'bg-gradient-to-r from-red-600 to-red-700 text-white ring-1 ring-red-700/50'
         }`}>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4" />
+          <div className="flex items-center gap-2.5">
+            {notification.type === 'success'
+              ? <CheckCircle2 className="w-5 h-5 shrink-0" />
+              : <AlertCircle className="w-5 h-5 shrink-0" />}
             <span>{notification.msg}</span>
           </div>
-          <button onClick={() => setNotification(null)} className="text-white/80 hover:text-white">✕</button>
+          <button onClick={() => setNotification(null)} className="ml-3 p-1 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-all" aria-label="Dismiss">✕</button>
         </div>
       )}
 
       {/* Header & Tabs */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+      <div className="bg-white rounded-2xl p-5 shadow-sm shadow-slate-200/60 ring-1 ring-slate-900/5 border border-slate-200/80">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          
+
           {/* Sub Tabs */}
-          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+          <div className="flex bg-slate-100/80 p-1 rounded-xl ring-1 ring-slate-200/70">
             <button
               type="button"
               onClick={() => setSubTab('permanent')}
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 ${
+              className={`px-4 py-2.5 text-sm font-bold rounded-lg transition-all flex items-center gap-2 ${
                 subTab === 'permanent'
-                  ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white text-emerald-900 shadow-sm ring-1 ring-emerald-200/80'
+                  : 'text-slate-500 hover:text-slate-900'
               }`}
             >
-              <Users className="w-4 h-4 text-amber-600" />
+              <Users className={`w-4 h-4 ${subTab === 'permanent' ? 'text-emerald-700' : 'text-amber-500'}`} />
               <span>{t('tabPermanent')} ({permanentCustomers.length})</span>
             </button>
             <button
               type="button"
               onClick={() => setSubTab('walkin')}
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 ${
+              className={`px-4 py-2.5 text-sm font-bold rounded-lg transition-all flex items-center gap-2 ${
                 subTab === 'walkin'
-                  ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-white text-emerald-900 shadow-sm ring-1 ring-emerald-200/80'
+                  : 'text-slate-500 hover:text-slate-900'
               }`}
             >
-              <Award className="w-4 h-4 text-amber-600" />
+              <Award className="w-4 h-4 text-amber-500" />
               <span>{t('tabFrequentWalkin')}</span>
               {frequentWalkinsCount > 0 && (
-                <span className="px-1.5 py-0.5 text-[10px] font-black bg-amber-500 text-white rounded-full">
+                <span className="px-1.5 py-0.5 text-[10px] font-black bg-gradient-to-r from-amber-400 to-amber-500 text-white rounded-full shadow-sm shadow-amber-500/30 tabular-nums">
                   {frequentWalkinsCount}
                 </span>
               )}
@@ -254,13 +256,13 @@ export default function CustomersScreen({
           {/* Right Action: Search & Add Customer */}
           <div className="flex items-center gap-3">
             <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 placeholder={t('searchCustomerPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium w-48 sm:w-64 focus:bg-white"
+                className="pl-10 pr-4 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-400 placeholder:font-normal w-52 sm:w-72 focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
               />
             </div>
 
@@ -268,7 +270,7 @@ export default function CustomersScreen({
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(true)}
-                className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#156b46] to-emerald-800 hover:from-[#0e4f33] hover:to-emerald-900 text-white font-semibold text-sm rounded-xl shadow-md shadow-emerald-900/20 transition-all duration-200 whitespace-nowrap"
               >
                 <UserPlus className="w-4 h-4" />
                 <span>{t('addCustomer')}</span>
@@ -281,80 +283,85 @@ export default function CustomersScreen({
 
       {/* Tab 1: Permanent Customers */}
       {subTab === 'permanent' && (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm shadow-slate-200/60 ring-1 ring-slate-900/5 border border-slate-200/80 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-600 border-b border-slate-200">
-                  <th className="py-3 px-4 w-12 text-center">#</th>
-                  <th className="py-3 px-4">{t('customerName')}</th>
-                  <th className="py-3 px-4">{t('shopName')}</th>
-                  <th className="py-3 px-4">{t('phone')}</th>
-                  <th className="py-3 px-4">{t('address')}</th>
-                  <th className="py-3 px-4 text-right">Registered</th>
-                  <th className="py-3 px-4 text-center w-28">{t('actions')}</th>
+                <tr className="bg-slate-50/80 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 border-b border-slate-200">
+                  <th className="py-3.5 px-4 w-12 text-center">#</th>
+                  <th className="py-3.5 px-4">{t('customerName')}</th>
+                  <th className="py-3.5 px-4">{t('shopName')}</th>
+                  <th className="py-3.5 px-4">{t('phone')}</th>
+                  <th className="py-3.5 px-4">{t('address')}</th>
+                  <th className="py-3.5 px-4 text-right">Registered</th>
+                  <th className="py-3.5 px-4 text-center w-28">{t('actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredPermanent.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-xs text-slate-500">
-                      {t('noCustomersFound')}
+                    <td colSpan={7} className="py-14 text-center">
+                      <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 mb-3">
+                        <Users className="w-6 h-6" />
+                      </div>
+                      <p className="text-sm text-slate-500 font-medium">{t('noCustomersFound')}</p>
                     </td>
                   </tr>
                 ) : (
                   filteredPermanent.map((cust, idx) => (
-                    <tr key={cust.id} className="hover:bg-slate-50/70">
-                      <td className="py-3 px-4 text-center font-bold text-xs text-slate-400">
-                        {idx + 1}
+                    <tr key={cust.id} className="hover:bg-emerald-50/40 transition-colors">
+                      <td className="py-3.5 px-4 text-center">
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-slate-100 text-slate-500 text-xs font-bold tabular-nums">
+                          {idx + 1}
+                        </span>
                       </td>
-                      <td className="py-3 px-4">
-                        <div className="font-bold text-xs text-slate-900 flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-full bg-amber-100 text-amber-900 flex items-center justify-center text-[10px]">
+                      <td className="py-3.5 px-4">
+                        <div className="font-bold text-sm text-slate-900 flex items-center gap-2.5">
+                          <span className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-100 to-emerald-200 text-emerald-800 ring-1 ring-emerald-300/60 flex items-center justify-center text-sm shrink-0">
                             👤
                           </span>
                           <span>{cust.name}</span>
                         </div>
                       </td>
-                      <td className="py-3 px-4 font-semibold text-xs text-slate-700">
+                      <td className="py-3.5 px-4 font-semibold text-sm text-slate-700">
                         {cust.shop_name ? (
                           <span className="flex items-center gap-1.5">
-                            <Store className="w-3.5 h-3.5 text-slate-400" />
+                            <Store className="w-4 h-4 text-slate-400 shrink-0" />
                             {cust.shop_name}
                           </span>
                         ) : (
                           <span className="text-slate-400">—</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 font-mono text-xs text-slate-800">
+                      <td className="py-3.5 px-4 font-mono text-sm text-slate-800">
                         {cust.phone ? (
                           <span className="flex items-center gap-1.5">
-                            <Phone className="w-3.5 h-3.5 text-slate-400" />
+                            <Phone className="w-4 h-4 text-slate-400 shrink-0" />
                             {cust.phone}
                           </span>
                         ) : (
                           <span className="text-slate-400">—</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-xs text-slate-600">
+                      <td className="py-3.5 px-4 text-sm text-slate-600">
                         {cust.address ? (
                           <span className="flex items-center gap-1.5">
-                            <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                            <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
                             {cust.address}
                           </span>
                         ) : (
                           <span className="text-slate-400">—</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-right font-mono text-[11px] text-slate-500">
+                      <td className="py-3.5 px-4 text-right font-mono text-xs text-slate-500">
                         {cust.created_at ? new Date(cust.created_at).toLocaleDateString() : '—'}
                       </td>
-                      <td className="py-3 px-4 text-center">
+                      <td className="py-3.5 px-4 text-center">
                         <div className="flex items-center justify-center gap-1.5">
                           <button
                             type="button"
                             onClick={() => handleOpenEdit(cust)}
-                            className="p-1.5 text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50 rounded-lg transition-all"
+                            className="p-2 text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50 rounded-lg transition-all"
                             title={t('editCustomer')}
                           >
                             <Edit className="w-4 h-4" />
@@ -362,7 +369,7 @@ export default function CustomersScreen({
                           <button
                             type="button"
                             onClick={() => handleDeleteCustomer(cust.id, cust.name)}
-                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                             title={t('deleteCustomer')}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -380,20 +387,20 @@ export default function CustomersScreen({
 
       {/* Tab 2: Frequent Walk-Ins (Staging Table with 1-Click Promote) */}
       {subTab === 'walkin' && (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          
+        <div className="bg-white rounded-2xl shadow-sm shadow-slate-200/60 ring-1 ring-slate-900/5 border border-slate-200/80 overflow-hidden">
+
           {/* Informational Callout */}
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 border-b border-amber-200/80 flex items-start gap-3">
-            <div className="p-2 bg-amber-500 text-white rounded-xl shadow-sm">
+          <div className="bg-gradient-to-r from-amber-50 via-amber-50 to-orange-50 p-5 border-b border-amber-200/70 flex items-start gap-3.5">
+            <div className="p-2.5 bg-gradient-to-br from-amber-400 to-amber-500 text-white rounded-xl shadow-md shadow-amber-500/25 shrink-0">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-bold text-xs text-amber-950 uppercase tracking-wider">
+              <h4 className="font-bold text-xs text-amber-900 uppercase tracking-[0.08em]">
                 Frequent Walk-Ins Staging Area (Auto-Tracked via Mobile Number)
               </h4>
-              <p className="text-xs text-amber-900/90 mt-0.5">
+              <p className="text-sm text-amber-900/80 mt-1 leading-relaxed">
                 Every time a walk-in bill is saved with a mobile number, visits and total purchase spend are staged here without polluting the permanent list. 
-                Buyers with <strong>3 or more visits</strong> are highlighted for 1-Click promotion to Permanent Customer status.
+                Buyers with <strong className="font-bold text-amber-950">3 or more visits</strong> are highlighted for 1-Click promotion to Permanent Customer status.
               </p>
             </div>
           </div>
@@ -401,22 +408,25 @@ export default function CustomersScreen({
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-600 border-b border-slate-200">
-                  <th className="py-3 px-4 w-12 text-center">#</th>
-                  <th className="py-3 px-4">{t('phone')}</th>
-                  <th className="py-3 px-4">{t('customerName')}</th>
-                  <th className="py-3 px-4">{t('shopName')}</th>
-                  <th className="py-3 px-4 text-center">{t('visitCount')}</th>
-                  <th className="py-3 px-4 text-right">{t('totalSpent')}</th>
-                  <th className="py-3 px-4 text-right">{t('lastVisit')}</th>
-                  <th className="py-3 px-4 text-center">Auto-Promotion Action</th>
+                <tr className="bg-slate-50/80 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 border-b border-slate-200">
+                  <th className="py-3.5 px-4 w-12 text-center">#</th>
+                  <th className="py-3.5 px-4">{t('phone')}</th>
+                  <th className="py-3.5 px-4">{t('customerName')}</th>
+                  <th className="py-3.5 px-4">{t('shopName')}</th>
+                  <th className="py-3.5 px-4 text-center">{t('visitCount')}</th>
+                  <th className="py-3.5 px-4 text-right">{t('totalSpent')}</th>
+                  <th className="py-3.5 px-4 text-right">{t('lastVisit')}</th>
+                  <th className="py-3.5 px-4 text-center">Auto-Promotion Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredWalkins.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-8 text-center text-xs text-slate-500">
-                      {t('noWalkinsFound')}
+                    <td colSpan={8} className="py-14 text-center">
+                      <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 mb-3">
+                        <Award className="w-6 h-6" />
+                      </div>
+                      <p className="text-sm text-slate-500 font-medium">{t('noWalkinsFound')}</p>
                     </td>
                   </tr>
                 ) : (
@@ -427,57 +437,61 @@ export default function CustomersScreen({
                       <tr 
                         key={w.id} 
                         className={`transition-colors ${
-                          isFrequent ? 'bg-amber-50/50 hover:bg-amber-100/50' : 'hover:bg-slate-50/70'
+                          isFrequent ? 'bg-amber-50/60 hover:bg-amber-100/60' : 'hover:bg-emerald-50/40'
                         }`}
                       >
-                        <td className="py-3 px-4 text-center font-bold text-xs text-slate-400">
-                          {idx + 1}
+                        <td className="py-3.5 px-4 text-center">
+                          <span className={`inline-flex items-center justify-center w-7 h-7 rounded-lg text-xs font-bold tabular-nums ${
+                            isFrequent ? 'bg-amber-200/70 text-amber-900' : 'bg-slate-100 text-slate-500'
+                          }`}>
+                            {idx + 1}
+                          </span>
                         </td>
-                        <td className="py-3 px-4 font-mono font-bold text-xs text-slate-900">
+                        <td className="py-3.5 px-4 font-mono font-bold text-sm text-slate-900">
                           <span className="flex items-center gap-1.5">
-                            <Phone className="w-3.5 h-3.5 text-amber-600" />
+                            <Phone className="w-4 h-4 text-amber-500 shrink-0" />
                             {w.phone}
                           </span>
                         </td>
-                        <td className="py-3 px-4 font-semibold text-xs text-slate-800">
+                        <td className="py-3.5 px-4 font-semibold text-sm text-slate-800">
                           {w.name || <span className="text-slate-400 italic">Not recorded</span>}
                         </td>
-                        <td className="py-3 px-4 text-xs text-slate-700">
+                        <td className="py-3.5 px-4 text-sm text-slate-600">
                           {w.shop_name || <span className="text-slate-400 italic">—</span>}
                         </td>
-                        <td className="py-3 px-4 text-center">
+                        <td className="py-3.5 px-4 text-center">
                           <div className="inline-flex items-center gap-1.5">
-                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-black ${
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-black tabular-nums ${
                               isFrequent 
-                                ? 'bg-amber-500 text-slate-950 border border-amber-600 shadow-sm'
-                                : 'bg-slate-100 text-slate-800'
+                                ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-white shadow-sm shadow-amber-500/30'
+                                : 'bg-slate-100 text-slate-700'
                             }`}>
                               {w.visit_count} {w.visit_count === 1 ? 'visit' : 'visits'}
                             </span>
                             {isFrequent && (
-                              <span className="text-amber-600 font-bold text-xs" title="3+ visits frequent buyer">
+                              <span className="text-amber-500 font-bold text-sm drop-shadow-sm" title="3+ visits frequent buyer">
                                 ★
                               </span>
                             )}
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-right font-mono font-bold text-xs text-slate-900">
+                        <td className="py-3.5 px-4 text-right font-mono font-bold text-sm text-slate-900">
                           ₹{Number(w.total_spent || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                         </td>
-                        <td className="py-3 px-4 text-right font-mono text-[11px] text-slate-500">
+                        <td className="py-3.5 px-4 text-right font-mono text-xs text-slate-500">
                           {w.last_visit_date ? new Date(w.last_visit_date).toLocaleDateString() : '—'}
                         </td>
-                        <td className="py-3 px-4 text-center">
+                        <td className="py-3.5 px-4 text-center">
                           <button
                             type="button"
                             onClick={() => handlePromote(w.id)}
-                            className={`px-3 py-1.5 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 mx-auto ${
+                            className={`inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl font-bold text-sm transition-all mx-auto ${
                               isFrequent
-                                ? 'bg-leaf-600 hover:bg-leaf-700 active:bg-leaf-800 text-white shadow-md shadow-leaf-600/20'
-                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300'
+                                ? 'bg-gradient-to-r from-[#156b46] to-emerald-800 hover:from-[#0e4f33] hover:to-emerald-900 text-white shadow-md shadow-emerald-900/20'
+                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700 ring-1 ring-slate-200'
                             }`}
                           >
-                            <UserCheck className="w-3.5 h-3.5" />
+                            <UserCheck className="w-4 h-4" />
                             <span>{t('promoteBtn')}</span>
                           </button>
                         </td>
@@ -493,25 +507,31 @@ export default function CustomersScreen({
 
       {/* Add Permanent Customer Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden">
-            <div className="bg-amber-600 px-6 py-4 text-white flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <UserPlus className="w-5 h-5 text-white" />
-                <h3 className="font-bold text-base">{t('addCustomer')}</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl shadow-slate-900/25 ring-1 ring-slate-900/5 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="relative bg-gradient-to-r from-emerald-950 via-[#156b46] to-emerald-900 px-6 py-5 text-white overflow-hidden">
+              <div className="absolute -right-6 -top-8 w-28 h-28 rounded-full bg-white/5 pointer-events-none" />
+              <div className="relative flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/15 rounded-xl ring-1 ring-white/25 shrink-0">
+                    <UserPlus className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="font-bold text-lg tracking-tight text-white">{t('addCustomer')}</h3>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/15 transition-all"
+                >
+                  <span className="text-lg leading-none">✕</span>
+                </button>
               </div>
-              <button 
-                type="button" 
-                onClick={() => setIsAddModalOpen(false)}
-                className="text-white/80 hover:text-white"
-              >
-                ✕
-              </button>
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500" />
             </div>
 
-            <form onSubmit={handleAddPermanent} className="p-6 space-y-3.5">
+            <form onSubmit={handleAddPermanent} className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   {t('customerName')} *
                 </label>
                 <input
@@ -520,12 +540,12 @@ export default function CustomersScreen({
                   placeholder="e.g. Ananthu K."
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold focus:bg-white"
+                  className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   {t('shopName')}
                 </label>
                 <input
@@ -533,12 +553,12 @@ export default function CustomersScreen({
                   placeholder="e.g. Ananthu Supermarket"
                   value={formShop}
                   onChange={(e) => setFormShop(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold focus:bg-white"
+                  className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   {t('phone')}
                 </label>
                 <input
@@ -546,12 +566,12 @@ export default function CustomersScreen({
                   placeholder="e.g. 9847123456"
                   value={formPhone}
                   onChange={(e) => setFormPhone(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold focus:bg-white"
+                  className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   {t('address')}
                 </label>
                 <textarea
@@ -559,22 +579,23 @@ export default function CustomersScreen({
                   placeholder="Shop location / Market road address"
                   value={formAddress}
                   onChange={(e) => setFormAddress(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:bg-white"
+                  className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all resize-none"
                 />
               </div>
 
-              <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+              <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900"
+                  className="px-4 py-2.5 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-xl border border-slate-200 transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow transition-all"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#156b46] to-emerald-800 hover:from-[#0e4f33] hover:to-emerald-900 text-white text-sm font-semibold rounded-xl shadow-md shadow-emerald-900/20 transition-all duration-200"
                 >
+                  <UserPlus className="w-4 h-4" />
                   Save Customer
                 </button>
               </div>
@@ -585,28 +606,34 @@ export default function CustomersScreen({
 
       {/* Edit Permanent Customer Modal */}
       {isEditModalOpen && editingCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            <div className="bg-[#156b46] px-6 py-4 text-white flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Edit className="w-5 h-5 text-white" />
-                <h3 className="font-bold text-base">{t('editCustomer')}</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl shadow-slate-900/25 ring-1 ring-slate-900/5 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="relative bg-gradient-to-r from-emerald-950 via-[#156b46] to-emerald-900 px-6 py-5 text-white overflow-hidden">
+              <div className="absolute -right-6 -top-8 w-28 h-28 rounded-full bg-white/5 pointer-events-none" />
+              <div className="relative flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/15 rounded-xl ring-1 ring-white/25 shrink-0">
+                    <Edit className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="font-bold text-lg tracking-tight text-white">{t('editCustomer')}</h3>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setIsEditModalOpen(false);
+                    setEditingCustomer(null);
+                  }}
+                  className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/15 transition-all"
+                >
+                  <span className="text-lg leading-none">✕</span>
+                </button>
               </div>
-              <button 
-                type="button" 
-                onClick={() => {
-                  setIsEditModalOpen(false);
-                  setEditingCustomer(null);
-                }}
-                className="text-white/80 hover:text-white"
-              >
-                ✕
-              </button>
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500" />
             </div>
 
-            <form onSubmit={handleSaveEdit} className="p-6 space-y-3.5">
+            <form onSubmit={handleSaveEdit} className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   {t('customerName')} *
                 </label>
                 <input
@@ -615,12 +642,12 @@ export default function CustomersScreen({
                   placeholder="e.g. Ananthu K."
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold focus:bg-white"
+                  className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   {t('shopName')}
                 </label>
                 <input
@@ -628,12 +655,12 @@ export default function CustomersScreen({
                   placeholder="e.g. Ananthu Supermarket"
                   value={editShop}
                   onChange={(e) => setEditShop(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold focus:bg-white"
+                  className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   {t('phone')}
                 </label>
                 <input
@@ -641,12 +668,12 @@ export default function CustomersScreen({
                   placeholder="e.g. 9847123456"
                   value={editPhone}
                   onChange={(e) => setEditPhone(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold focus:bg-white"
+                  className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
                   {t('address')}
                 </label>
                 <textarea
@@ -654,25 +681,25 @@ export default function CustomersScreen({
                   placeholder="Shop location / Market road address"
                   value={editAddress}
                   onChange={(e) => setEditAddress(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:bg-white"
+                  className="w-full px-3.5 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all resize-none"
                 />
               </div>
 
-              <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2">
+              <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={() => {
                     setIsEditModalOpen(false);
                     setEditingCustomer(null);
                   }}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900"
+                  className="px-4 py-2.5 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-xl border border-slate-200 transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingEdit}
-                  className="px-5 py-2 bg-[#156b46] hover:bg-[#125839] text-white text-xs font-bold rounded-xl shadow transition-all flex items-center gap-1.5"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#156b46] to-emerald-800 hover:from-[#0e4f33] hover:to-emerald-900 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl shadow-md shadow-emerald-900/20 transition-all duration-200"
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   <span>{isSavingEdit ? t('saving') : t('updateCustomer')}</span>

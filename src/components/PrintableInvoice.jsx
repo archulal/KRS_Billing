@@ -208,7 +208,7 @@ export default function PrintableInvoice({
       >
         {/* Colourful Shop Header + Black Invoice Tag */}
         <div
-          className="pt-2.5 pb-2 mb-2 border-b-2 border-amber-500 rounded-md px-2.5"
+          className="pt-2.5 pb-2 mb-2 border-b-2 border-amber-500 rounded-xl px-2.5"
           style={{
             background: 'linear-gradient(135deg, #dcfce7 0%, #fef9c3 55%, #ffedd5 100%)',
             borderTop: '4px solid #156b46',
@@ -242,7 +242,7 @@ export default function PrintableInvoice({
           </div>
           <div className="text-center mt-2">
             <span
-              className="px-2.5 py-0.5 text-[8.5px] font-black uppercase tracking-wider inline-block rounded-sm"
+              className="px-2.5 py-0.5 text-[8.5px] font-black uppercase tracking-wider inline-block rounded-md shadow-sm"
               style={{
                 background: '#156b46',
                 color: '#ffffff',
@@ -257,7 +257,7 @@ export default function PrintableInvoice({
         </div>
         {/* Bill Metadata & Customer Info */}
         <div
-          className="grid grid-cols-2 gap-2 my-2 text-[9px] text-slate-700 px-2 py-1.5 rounded-md"
+          className="grid grid-cols-2 gap-2 my-2 text-[9px] text-slate-700 px-2 py-1.5 rounded-xl"
           style={{
             background: '#ecfdf5',
             border: '1px solid #a7f3d0',
@@ -299,7 +299,16 @@ export default function PrintableInvoice({
           </div>
         </div>
         {/* Line Items Table */}
-        <table className="print-table w-full border-collapse border border-emerald-200 my-1.5 text-[9px] text-slate-800">
+        <div className="flex items-center justify-between px-0.5 mb-1">
+          <span className="text-[8px] font-black uppercase tracking-[0.18em]" style={{ color: '#047857' }}>
+            {lang === 'ml' ? 'വിൽപന ഇനങ്ങൾ' : 'Bill Items'}
+          </span>
+          <span className="text-[8px] font-semibold text-slate-400">
+            {bill.items?.length || 0} {lang === 'ml' ? 'ഇനങ്ങൾ' : 'items'}
+          </span>
+        </div>
+        <div className="my-1.5 rounded-xl overflow-hidden border border-emerald-200 shadow-sm">
+        <table className="print-table w-full border-collapse text-[9px] text-slate-800">
           <thead>
             <tr
               className="border-b-2 border-emerald-700 font-bold"
@@ -373,9 +382,10 @@ export default function PrintableInvoice({
             </tr>
           </tfoot>
         </table>
+        </div>
         {/* QR & Amount in Words */}
         <div
-          className="grid grid-cols-12 gap-2 my-1.5 p-1.5 items-center rounded-md"
+          className="grid grid-cols-12 gap-2 my-1.5 p-1.5 items-center rounded-xl"
           style={{
             background: '#f0fdf9',
             border: '1px solid #6ee7b7',
@@ -408,7 +418,7 @@ export default function PrintableInvoice({
               </div>
             </div>
             <div
-              className="mt-1 pt-1 pb-0.5 px-1.5 border-t border-emerald-300 flex items-center justify-between rounded-sm"
+              className="mt-1 pt-1 pb-0.5 px-1.5 border-t border-emerald-300 flex items-center justify-between rounded-lg"
               style={{ background: '#fef3c7', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
             >
               <span className="font-black uppercase text-[9.5px]" style={{ color: '#92400e' }}>
@@ -443,7 +453,7 @@ export default function PrintableInvoice({
             <p className="font-semibold text-right" style={{ color: '#065f46' }}>{t('authorizedSignatory')}</p>
           </div>
           <div
-            className="text-center mt-1 text-[7.5px] font-bold text-white py-0.5 rounded-sm"
+            className="text-center mt-1 text-[7.5px] font-bold text-white py-0.5 rounded-lg"
             style={{ background: '#156b46', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
           >
             {t('thankYou')}

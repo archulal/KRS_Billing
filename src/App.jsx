@@ -130,7 +130,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100 font-sans selection:bg-amber-200">
+    <div className="min-h-screen flex flex-col font-sans">
       
       {/* Top Header with Language Toggle & Live Clock */}
       <Header stats={stats} />
@@ -190,9 +190,9 @@ export default function App() {
       </main>
 
       {/* Offline Desktop Footer Note */}
-      <footer className="no-print bg-slate-200/80 border-t border-slate-300 py-3 text-center text-xs text-slate-500">
+      <footer className="no-print bg-white/70 backdrop-blur border-t border-slate-200/80 py-3 text-center text-[11px] font-medium text-slate-400">
         <p>
-          KRS Banana Wholesale Billing System • Canon PIXMA G3000 Series Ready (A5 / A4) • Standalone Offline POS
+          KRS Banana Wholesale Billing System <span className="text-emerald-500">•</span> Canon PIXMA G3000 Series Ready (A5 / A4) <span className="text-amber-500">•</span> Standalone Offline POS
         </p>
       </footer>
 

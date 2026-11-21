@@ -306,7 +306,7 @@ export default function BillingScreen({
     <div className="space-y-4">
       
       {/* Top Customer Selection Bar */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-emerald-100">
+      <div className="ui-card p-5 border-emerald-100/80">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           
           {/* Toggle: Walk-In vs Permanent Customer */}
@@ -314,7 +314,7 @@ export default function BillingScreen({
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
               {t('customerType')}:
             </span>
-            <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+            <div className="flex bg-slate-100/80 p-1 rounded-xl border border-slate-200/80">
               <button
                 type="button"
                 onClick={() => {
@@ -323,8 +323,8 @@ export default function BillingScreen({
                 }}
                 className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
                   customerType === 'walkin'
-                    ? 'bg-[#156b46] text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-gradient-to-r from-[#156b46] to-[#0e4f33] text-white shadow-md shadow-emerald-900/20'
+                    : 'text-slate-500 hover:text-emerald-800 hover:bg-white'
                 }`}
               >
                 <span>🚶 {t('walkInCustomer')}</span>
@@ -334,8 +334,8 @@ export default function BillingScreen({
                 onClick={() => setCustomerType('permanent')}
                 className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
                   customerType === 'permanent'
-                    ? 'bg-[#156b46] text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-gradient-to-r from-[#156b46] to-[#0e4f33] text-white shadow-md shadow-emerald-900/20'
+                    : 'text-slate-500 hover:text-emerald-800 hover:bg-white'
                 }`}
               >
                 <span>🏢 {t('permanentCustomer')}</span>
@@ -411,7 +411,7 @@ export default function BillingScreen({
                     }}
                     onFocus={() => setIsCustomerDropdownOpen(true)}
                     placeholder={t('selectCustomerPlaceholder')}
-                    className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:bg-white"
+                    className="ui-input pl-9 pr-8"
                   />
                   <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none" />
                 </div>
@@ -465,7 +465,7 @@ export default function BillingScreen({
       )}
 
       {/* Main Billing Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="ui-card overflow-hidden">
         
         {/* Helper Note for Stem Waste Formula */}
         <div className="bg-slate-50 px-5 py-2 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-600 gap-2">
@@ -480,7 +480,7 @@ export default function BillingScreen({
 
         {/* Quick Variety Selection Chips with Malayalam name in first place */}
         {bananaTypes.length > 0 && (
-          <div className="px-5 py-2.5 bg-emerald-50/60 border-b border-emerald-100 flex items-center gap-2 overflow-x-auto">
+          <div className="px-5 py-3 bg-gradient-to-r from-emerald-50/80 to-amber-50/60 border-b border-emerald-100 flex items-center gap-2 overflow-x-auto">
             <span className="text-[11px] font-bold text-emerald-900 whitespace-nowrap flex items-center gap-1 shrink-0">
               <span>🍌</span>
               <span>{lang === 'ml' ? 'പെട്ടെന്ന് ചേർക്കുക:' : 'Quick Add Variety:'}</span>
@@ -491,7 +491,7 @@ export default function BillingScreen({
                   key={v.id}
                   type="button"
                   onClick={() => handleQuickSelectVariety(v)}
-                  className="px-2.5 py-1 bg-white hover:bg-emerald-100 active:bg-emerald-200 border border-emerald-300 hover:border-emerald-500 rounded-lg text-xs font-bold text-slate-800 transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                  className="px-2.5 py-1.5 bg-white hover:bg-emerald-50 hover:-translate-y-0.5 active:translate-y-0 border border-emerald-200 hover:border-emerald-400 rounded-xl text-xs font-bold text-slate-700 transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
                   title={lang === 'ml' ? `${v.name_ml} ചേർക്കുക` : `Add ${v.name_en}`}
                 >
                   <span className="text-emerald-900 font-extrabold">
@@ -513,7 +513,7 @@ export default function BillingScreen({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-100/90 text-[11px] font-bold uppercase tracking-wider text-slate-600 border-b border-slate-200">
+              <tr className="bg-slate-50/80 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500 border-b border-slate-200">
                 <th className="py-3 px-3 text-center w-12">{t('slNo')}</th>
                 <th className="py-3 px-3 min-w-[200px]">{t('variety')}</th>
                 <th className="py-3 px-3 w-28 text-center">{t('bunches')}</th>
@@ -531,7 +531,7 @@ export default function BillingScreen({
                 const currentVariety = bananaTypes.find((b) => b.id === parseInt(row.banana_type_id, 10));
 
                 return (
-                  <tr key={row.rowId} className="hover:bg-slate-50/70 transition-colors">
+                  <tr key={row.rowId} className="hover:bg-emerald-50/40 transition-colors">
                     {/* Sl No */}
                     <td className="py-2.5 px-3 text-center font-bold text-xs text-slate-400">
                       {index + 1}
@@ -542,7 +542,7 @@ export default function BillingScreen({
                       <select
                         value={row.banana_type_id}
                         onChange={(e) => handleRowChange(index, 'banana_type_id', e.target.value)}
-                        className="w-full px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-bold text-slate-800 focus:bg-white"
+                        className="ui-input py-1.5 font-bold"
                       >
                         {bananaTypes.map((v) => (
                           <option key={v.id} value={v.id}>
@@ -573,7 +573,7 @@ export default function BillingScreen({
                           const val = e.target.value.replace(/[^0-9]/g, '');
                           handleRowChange(index, 'bunch_quantity', val);
                         }}
-                        className="w-full text-center px-2 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-900"
+                        className="ui-input py-1.5 text-center font-bold"
                       />
                     </td>
 
@@ -591,7 +591,7 @@ export default function BillingScreen({
                               handleRowChange(index, 'gross_weight_kg', val);
                             }
                           }}
-                          className="w-full text-right pr-6 pl-2 py-1.5 bg-emerald-50/30 border border-emerald-300 rounded-lg text-xs font-bold text-slate-900 focus:bg-white"
+                          className="ui-input py-1.5 pr-6 pl-2 text-right font-bold bg-emerald-50/40 border-emerald-200"
                         />
                         <span className="absolute right-2 top-2 text-[10px] text-slate-400 pointer-events-none">
                           kg
@@ -613,7 +613,7 @@ export default function BillingScreen({
                               handleRowChange(index, 'waste_per_bunch_kg', val);
                             }
                           }}
-                          className="w-full text-right pr-6 pl-2 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium text-slate-700 focus:bg-white"
+                          className="ui-input py-1.5 pr-6 pl-2 text-right"
                         />
                         <span className="absolute right-2 top-2 text-[10px] text-slate-400 pointer-events-none">
                           kg
@@ -623,14 +623,14 @@ export default function BillingScreen({
 
                     {/* Total Waste (kg) - Read only auto-calculated */}
                     <td className="py-2.5 px-3 text-right">
-                      <span className="font-mono text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md">
+                      <span className="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg">
                         {row.total_waste_kg.toFixed(2)} kg
                       </span>
                     </td>
 
                     {/* Net Weight (kg) - Read only auto-calculated */}
                     <td className="py-2.5 px-3 text-right">
-                      <span className="font-mono text-xs font-black text-emerald-900 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md">
+                      <span className="font-mono text-xs font-black text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg shadow-sm">
                         {row.net_weight_kg.toFixed(2)} kg
                       </span>
                     </td>
@@ -657,14 +657,14 @@ export default function BillingScreen({
                               handleAddRow();
                             }
                           }}
-                          className="w-full text-right pl-5 pr-2 py-1.5 bg-emerald-50/70 border border-emerald-400 rounded-lg text-xs font-bold text-emerald-950 focus:bg-white focus:ring-emerald-600"
+                          className="ui-input py-1.5 pl-5 pr-2 text-right font-bold bg-emerald-50/60 border-emerald-300 text-emerald-900"
                         />
                       </div>
                     </td>
 
                     {/* Subtotal (₹) */}
                     <td className="py-2.5 px-3 text-right">
-                      <span className="font-mono text-xs font-black text-slate-900 bg-slate-100 px-2.5 py-1 rounded-md">
+                      <span className="font-mono text-xs font-black text-slate-900 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg">
                         ₹{row.subtotal.toFixed(2)}
                       </span>
                     </td>
@@ -688,11 +688,11 @@ export default function BillingScreen({
         </div>
 
         {/* Add Row Button & Shortcuts */}
-        <div className="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+        <div className="p-3 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between">
           <button
             type="button"
             onClick={handleAddRow}
-            className="px-4 py-2 bg-white hover:bg-emerald-50 text-[#156b46] border border-emerald-300 font-bold text-xs rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+            className="ui-btn-soft shadow-sm"
           >
             <Plus className="w-4 h-4 text-[#156b46]" />
             <span>{t('addItem')}</span>
@@ -717,31 +717,31 @@ export default function BillingScreen({
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 items-center">
           
           {/* Total Bunches */}
-          <div className="bg-emerald-950/60 border border-emerald-400/30 rounded-xl p-3">
+          <div className="bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl p-3 shadow-inner">
             <span className="text-[11px] uppercase font-bold text-emerald-200 block">{t('totalBunches')}</span>
             <span className="text-xl font-black text-white">{billSummary.bunches}</span>
           </div>
 
           {/* Gross Weight */}
-          <div className="bg-emerald-950/60 border border-emerald-400/30 rounded-xl p-3">
+          <div className="bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl p-3 shadow-inner">
             <span className="text-[11px] uppercase font-bold text-emerald-200 block">{t('totalGrossWeight')}</span>
             <span className="text-xl font-black text-white">{billSummary.gross.toFixed(2)} kg</span>
           </div>
 
           {/* Total Stem Waste */}
-          <div className="bg-emerald-950/60 border border-emerald-400/30 rounded-xl p-3">
+          <div className="bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl p-3 shadow-inner">
             <span className="text-[11px] uppercase font-bold text-red-200 block">{t('totalStemWaste')}</span>
             <span className="text-xl font-black text-red-300">-{billSummary.waste.toFixed(2)} kg</span>
           </div>
 
           {/* Net Billable Weight */}
-          <div className="bg-emerald-950/60 border border-emerald-400/30 rounded-xl p-3">
+          <div className="bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl p-3 shadow-inner">
             <span className="text-[11px] uppercase font-bold text-emerald-200 block">{t('totalNetWeight')}</span>
             <span className="text-xl font-black text-emerald-300">{billSummary.net.toFixed(2)} kg</span>
           </div>
 
           {/* Grand Total - Clean White/Gold Contrast Box */}
-          <div className="col-span-2 sm:col-span-3 lg:col-span-1 bg-white text-emerald-950 rounded-xl p-3 shadow-lg flex flex-col justify-center border-2 border-emerald-300">
+          <div className="col-span-2 sm:col-span-3 lg:col-span-1 bg-white/95 text-emerald-950 rounded-2xl p-3 shadow-xl flex flex-col justify-center border border-amber-300 ring-4 ring-amber-400/10">
             <span className="text-[11px] uppercase font-black tracking-wider text-[#156b46] block">
               {t('grandTotal')}
             </span>
@@ -764,7 +764,7 @@ export default function BillingScreen({
             type="button"
             onClick={handleSaveAndPrintClick}
             disabled={isSaving}
-            className="w-full sm:w-auto px-8 py-3.5 bg-emerald-400 hover:bg-emerald-300 active:bg-emerald-500 text-emerald-950 font-black text-sm rounded-xl shadow-lg shadow-emerald-950/40 transition-all flex items-center justify-center gap-2 transform active:scale-95"
+            className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-amber-300 to-amber-400 hover:from-amber-400 hover:to-amber-500 active:from-amber-500 text-emerald-950 font-black text-sm rounded-xl shadow-lg shadow-amber-900/20 transition-all flex items-center justify-center gap-2 transform active:scale-95"
           >
             <Printer className="w-5 h-5 text-emerald-950" />
             <span>{isSaving ? t('saving') : t('saveAndPrint')}</span>
@@ -790,7 +790,7 @@ export default function BillingScreen({
       {/* Edit Selected Permanent Customer Modal */}
       {isEditCustomerOpen && selectedPermanentCustomer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="ui-card shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             <div className="bg-[#156b46] px-6 py-4 text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Edit className="w-5 h-5 text-white" />
@@ -815,7 +815,7 @@ export default function BillingScreen({
                   required
                   value={editCustName}
                   onChange={(e) => setEditCustName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold focus:bg-white"
+                  className="ui-input"
                 />
               </div>
 
@@ -827,7 +827,7 @@ export default function BillingScreen({
                   type="text"
                   value={editCustShop}
                   onChange={(e) => setEditCustShop(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold focus:bg-white"
+                  className="ui-input"
                 />
               </div>
 
@@ -839,7 +839,7 @@ export default function BillingScreen({
                   type="tel"
                   value={editCustPhone}
                   onChange={(e) => setEditCustPhone(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold focus:bg-white"
+                  className="ui-input"
                 />
               </div>
 
@@ -851,7 +851,7 @@ export default function BillingScreen({
                   rows={2}
                   value={editCustAddress}
                   onChange={(e) => setEditCustAddress(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:bg-white"
+                  className="ui-input"
                 />
               </div>
 

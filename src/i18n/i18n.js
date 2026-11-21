@@ -96,6 +96,8 @@ export const translations = {
     
     // Bills History
     historyTitle: "Past Billing Invoices",
+    historySubtitle: "View, search, and reprint past invoices in English or Malayalam.",
+    cancelBill: "Cancel Bill",
     searchBillsPlaceholder: "Search by Bill No, Customer, Phone, or Date...",
     billNo: "Bill No",
     date: "Date & Time",
@@ -284,6 +286,8 @@ export const translations = {
     
     // Bills History
     historyTitle: "മുൻപത്തെ ഇൻവോയ്സുകൾ",
+    historySubtitle: "മുൻ ഇൻവോയ്സുകൾ ഇംഗ്ലീഷ് അല്ലെങ്കിൽ മലയാളത്തിൽ കാണുക, തിരയുക, വീണ്ടും പ്രിന്റ് ചെയ്യുക.",
+    cancelBill: "ബിൽ റദ്ദാക്കുക",
     searchBillsPlaceholder: "ബിൽ നമ്പർ, കസ്റ്റമർ, ഫോൺ, തീയതി എന്നിവ തിരയുക...",
     billNo: "ബിൽ നമ്പർ",
     date: "തീയതി & സമയം",

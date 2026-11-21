@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
-import { History, Search, Calendar, Printer, FileText, TrendingUp, ShoppingBag, Weight, MessageCircle } from 'lucide-react';
+import { History, Search, Calendar, Printer, FileText, TrendingUp, ShoppingBag, Weight, MessageCircle, CheckCircle2, AlertCircle, X } from 'lucide-react';
 
 export default function BillsHistoryScreen({ onSelectBillForPrint }) {
   const { lang, t } = useLanguage();
@@ -98,20 +98,20 @@ export default function BillsHistoryScreen({ onSelectBillForPrint }) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
 
       {/* Search & Filter Bar */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white rounded-2xl p-5 shadow-sm shadow-emerald-900/5 border border-slate-200/80">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 
-          <div className="flex items-center space-x-3">
-            <div className="p-2.5 bg-amber-100 rounded-xl text-amber-800">
+          <div className="flex items-center space-x-3.5">
+            <div className="p-3 bg-gradient-to-br from-[#156b46] to-[#0e4f33] rounded-2xl text-white shadow-lg shadow-emerald-900/20">
               <History className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900">{t('historyTitle')}</h2>
-              <p className="text-xs text-slate-500">
-                View, search, and reprint past invoices in either English or Malayalam.
+              <h2 className="text-lg font-bold tracking-tight text-slate-900">{t('historyTitle')}</h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {t('historySubtitle')}
               </p>
             </div>
           </div>
@@ -119,29 +119,29 @@ export default function BillsHistoryScreen({ onSelectBillForPrint }) {
           <div className="flex items-center gap-3 flex-wrap">
             {/* Search Input */}
             <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 placeholder={t('searchBillsPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium w-48 sm:w-64 focus:bg-white"
+                className="pl-10 pr-4 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 w-56 sm:w-72 outline-none focus:bg-white focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10 transition-all placeholder:text-slate-400"
               />
             </div>
 
             {/* Date Filter */}
-            <div className="relative">
+            <div className="relative flex items-center gap-2">
               <input
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-700 focus:bg-white"
+                className="px-4 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none focus:bg-white focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10 transition-all"
               />
               {selectedDate && (
                 <button
                   type="button"
                   onClick={() => setSelectedDate('')}
-                  className="ml-1 text-[11px] text-slate-400 hover:text-slate-700 underline"
+                  className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 hover:underline"
                 >
                   Clear
                 </button>
@@ -154,7 +154,7 @@ export default function BillsHistoryScreen({ onSelectBillForPrint }) {
 
       {cancelNotice && (
         <div
-          className={`flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl border text-xs font-semibold ${
+          className={`flex items-center justify-between gap-3 px-4 py-3 rounded-xl border shadow-sm text-sm font-semibold ${
             cancelNotice.type === 'success'
               ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
               : cancelNotice.type === 'error'
@@ -162,68 +162,84 @@ export default function BillsHistoryScreen({ onSelectBillForPrint }) {
               : 'bg-amber-50 border-amber-200 text-amber-800'
           }`}
         >
-          <span>{cancelNotice.message}</span>
+          <span className="flex items-center gap-2.5">
+            {cancelNotice.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 shrink-0" />
+            )}
+            {cancelNotice.message}
+          </span>
           <button
             type="button"
             onClick={() => setCancelNotice(null)}
-            className="opacity-60 hover:opacity-100"
+            className="shrink-0 p-1 rounded-lg opacity-60 hover:opacity-100 hover:bg-black/5 transition-all"
             aria-label="Dismiss"
           >
-            ✕
+            <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
       {/* Bills Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-md shadow-emerald-900/5 border border-slate-200/80 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-600 border-b border-slate-200">
-                <th className="py-3 px-4 w-28">{t('billNo')}</th>
-                <th className="py-3 px-4">{t('customer')}</th>
-                <th className="py-3 px-4 w-40">{t('date')}</th>
-                <th className="py-3 px-4 text-center w-20">{t('bunches')}</th>
-                <th className="py-3 px-4 text-right w-28">{t('grossWeight')}</th>
-                <th className="py-3 px-4 text-right w-28">{t('totalWaste')}</th>
-                <th className="py-3 px-4 text-right w-28">{t('netWeight')}</th>
-                <th className="py-3 px-4 text-right w-32 font-black">{t('grandTotal')}</th>
-                <th className="py-3 px-4 text-center w-52">{t('actions')}</th>
+              <tr className="bg-slate-50/90 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                <th className="py-3.5 px-4 w-28">{t('billNo')}</th>
+                <th className="py-3.5 px-4">{t('customer')}</th>
+                <th className="py-3.5 px-4 w-40">{t('date')}</th>
+                <th className="py-3.5 px-4 text-center w-20">{t('bunches')}</th>
+                <th className="py-3.5 px-4 text-right w-28">{t('grossWeight')}</th>
+                <th className="py-3.5 px-4 text-right w-28">{t('totalWaste')}</th>
+                <th className="py-3.5 px-4 text-right w-28">{t('netWeight')}</th>
+                <th className="py-3.5 px-4 text-right w-32 font-black">{t('grandTotal')}</th>
+                <th className="py-3.5 px-4 text-center w-52">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {bills.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-xs text-slate-500">
-                    {isLoading ? 'Loading bills...' : 'No billing records found.'}
+                  <td colSpan={9} className="py-16 text-center">
+                    <div className="flex flex-col items-center gap-2.5">
+                      <div className="p-3 rounded-2xl bg-slate-100 text-slate-400">
+                        <FileText className="w-6 h-6" />
+                      </div>
+                      <span className="text-sm font-semibold text-slate-600">
+                        {isLoading ? 'Loading bills...' : 'No billing records found.'}
+                      </span>
+                    </div>
                   </td>
                 </tr>
               ) : (
                 bills.map((b) => (
-                  <tr key={b.id} className="hover:bg-slate-50/70 transition-colors">
+                  <tr key={b.id} className="hover:bg-emerald-50/40 transition-colors">
                     {/* Bill No */}
-                    <td className="py-3 px-4 font-mono font-bold text-xs text-amber-800">
-                      {b.bill_number}
+                    <td className="py-3.5 px-4">
+                      <span className="inline-block px-2 py-1 rounded-lg bg-amber-50 text-amber-800 font-mono font-bold text-xs ring-1 ring-inset ring-amber-200/70">
+                        {b.bill_number}
+                      </span>
                     </td>
 
                     {/* Customer Info */}
-                    <td className="py-3 px-4">
-                      <div className="font-bold text-xs text-slate-900">
+                    <td className="py-3.5 px-4">
+                      <div className="font-bold text-sm text-slate-900">
                         {b.customer_display_name || 'Walk-In Customer'}
                       </div>
-                      <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
-                        <span className={`px-1.5 py-0.2 rounded text-[10px] font-semibold ${b.customer_type === 'permanent'
-                          ? 'bg-leaf-100 text-leaf-800'
-                          : 'bg-amber-100 text-amber-800'
+                      <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-1">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ring-1 ring-inset ${b.customer_type === 'permanent'
+                          ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+                          : 'bg-amber-50 text-amber-700 ring-amber-200'
                           }`}>
                           {b.customer_type === 'permanent' ? 'Permanent' : 'Walk-In'}
                         </span>
-                        {b.customer_phone && <span>📞 {b.customer_phone}</span>}
+                        {b.customer_phone && <span className="font-mono">📞 {b.customer_phone}</span>}
                       </div>
                     </td>
 
                     {/* Date */}
-                    <td className="py-3 px-4 font-mono text-xs text-slate-600">
+                    <td className="py-3.5 px-4 font-mono text-xs text-slate-600">
                       {new Date(b.date).toLocaleString(lang === 'ml' ? 'ml-IN' : 'en-IN', {
                         dateStyle: 'short',
                         timeStyle: 'short',
@@ -231,35 +247,35 @@ export default function BillsHistoryScreen({ onSelectBillForPrint }) {
                     </td>
 
                     {/* Bunches */}
-                    <td className="py-3 px-4 text-center font-mono font-bold text-xs text-slate-800">
+                    <td className="py-3.5 px-4 text-center font-mono font-bold text-xs text-slate-800">
                       {b.total_bunches || '—'}
                     </td>
 
                     {/* Gross */}
-                    <td className="py-3 px-4 text-right font-mono text-xs text-slate-700">
+                    <td className="py-3.5 px-4 text-right font-mono text-xs text-slate-600">
                       {Number(b.total_gross_weight).toFixed(2)} kg
                     </td>
 
                     {/* Waste */}
-                    <td className="py-3 px-4 text-right font-mono text-xs text-red-600">
+                    <td className="py-3.5 px-4 text-right font-mono text-xs text-red-600">
                       -{Number(b.total_waste_weight).toFixed(2)} kg
                     </td>
 
                     {/* Net */}
-                    <td className="py-3 px-4 text-right font-mono font-bold text-xs text-leaf-700">
+                    <td className="py-3.5 px-4 text-right font-mono font-bold text-xs text-emerald-700">
                       {Number(b.total_net_weight).toFixed(2)} kg
                     </td>
 
                     {/* Grand Total */}
-                    <td className="py-3 px-4 text-right font-mono font-black text-xs text-slate-900">
+                    <td className="py-3.5 px-4 text-right font-mono font-black text-sm text-slate-900">
                       ₹{Number(b.grand_total).toFixed(2)}
                     </td>
-                    <td className="py-3 px-4 text-center">
+                    <td className="py-3.5 px-4 text-center">
                       <div className="flex gap-2 justify-center">
                         <button
                           type="button"
                           onClick={() => handlePrintClick(b.id)}
-                          className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5"
+                          className="px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-sm hover:shadow"
                         >
                           <Printer className="w-3.5 h-3.5 text-amber-700" />
                           <span>{t('printInvoice')}</span>
@@ -267,7 +283,7 @@ export default function BillsHistoryScreen({ onSelectBillForPrint }) {
                         <button
                           type="button"
                           onClick={() => handlePrintClick(b.id)}
-                          className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5"
+                          className="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-sm hover:shadow"
                           title={t('waSend')}
                         >
                           <MessageCircle className="w-3.5 h-3.5 text-emerald-700" />
@@ -277,14 +293,14 @@ export default function BillsHistoryScreen({ onSelectBillForPrint }) {
                           <button
                             type="button"
                             onClick={() => handleCancelBill(b.id)}
-                            className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-900 border border-red-300 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5"
+                            className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 shadow-sm hover:shadow"
                           >
                             <span>{t('cancelBill')}</span>
                           </button>
                         )}
                       </div>
                       {b.status === 'cancelled' && (
-                        <span className="mt-1 inline-block px-2 py-0.5 bg-gray-200 text-gray-600 text-xs rounded">
+                        <span className="mt-2 inline-flex items-center px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold ring-1 ring-inset ring-slate-200">
                           {t('cancelled')}
                         </span>
                       )}

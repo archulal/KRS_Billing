@@ -137,29 +137,31 @@ export default function SettingsScreen({ settings, onSettingsSaved }) {
   const badgeClass = status ? STATUS_COLORS[status.status] || STATUS_COLORS.idle : STATUS_COLORS.idle;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Page Header */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex items-center space-x-3">
-        <div className="p-2.5 bg-emerald-100 rounded-xl text-emerald-800">
+      <div className="bg-gradient-to-r from-white via-white to-emerald-50/50 rounded-2xl p-5 shadow-sm shadow-emerald-900/5 border border-slate-200/80 flex items-center space-x-4">
+        <div className="p-3 bg-gradient-to-br from-[#156b46] to-[#0e4f33] rounded-2xl text-white shadow-lg shadow-emerald-900/20">
           <SettingsIcon className="w-5 h-5" />
         </div>
         <div>
-          <h2 className="text-base font-bold text-slate-900">{t('settingsTitle')}</h2>
-          <p className="text-xs text-slate-500">{t('settingsSubtitle')}</p>
+          <h2 className="text-lg font-bold tracking-tight text-slate-900">{t('settingsTitle')}</h2>
+          <p className="text-xs text-slate-500 mt-0.5">{t('settingsSubtitle')}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Sender Configuration */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <MessageCircle className="w-4 h-4 text-emerald-700" />
+        <div className="bg-white rounded-2xl shadow-md shadow-emerald-900/5 border border-slate-200/80 p-6">
+          <div className="flex items-center gap-2.5 mb-5">
+            <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700">
+              <MessageCircle className="w-4 h-4" />
+            </div>
             <h3 className="text-sm font-bold text-slate-900">{t('waOwnerNumber')}</h3>
           </div>
 
           {notice && (
             <div
-              className={`mb-3 flex items-center gap-2 text-xs p-2.5 rounded-lg border ${
+              className={`mb-4 flex items-center gap-2.5 text-sm p-3 rounded-xl border shadow-sm ${
                 notice.type === 'success'
                   ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
                   : 'bg-red-50 border-red-200 text-red-700'
@@ -174,9 +176,9 @@ export default function SettingsScreen({ settings, onSettingsSaved }) {
             </div>
           )}
 
-          <form onSubmit={handleSave} className="space-y-3.5">
+          <form onSubmit={handleSave} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label className="block text-xs font-bold text-slate-600 mb-1.5">
                 {t('waOwnerNumber')}
               </label>
               <input
@@ -184,20 +186,20 @@ export default function SettingsScreen({ settings, onSettingsSaved }) {
                 value={ownerNumber}
                 onChange={(e) => setOwnerNumber(e.target.value)}
                 placeholder="+91 94473 04307"
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold focus:bg-white"
+                className="w-full px-4 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 outline-none focus:bg-white focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10 transition-all placeholder:text-slate-400"
               />
-              <p className="text-[10px] text-slate-500 mt-1 leading-snug">{t('waOwnerHint')}</p>
+              <p className="text-[11px] text-slate-500 mt-1.5 leading-relaxed">{t('waOwnerHint')}</p>
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-bold text-slate-700">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-slate-600">
                   {t('waMessageTemplate')}
                 </label>
                 <button
                   type="button"
                   onClick={() => setMessageTemplate(DEFAULT_MESSAGE)}
-                  className="text-[10px] text-emerald-700 hover:underline"
+                  className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900 hover:underline"
                 >
                   {t('waMessageReset')}
                 </button>
@@ -206,16 +208,16 @@ export default function SettingsScreen({ settings, onSettingsSaved }) {
                 rows={5}
                 value={messageTemplate}
                 onChange={(e) => setMessageTemplate(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:bg-white resize-y"
+                className="w-full px-4 py-2.5 bg-slate-50/80 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 outline-none focus:bg-white focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10 transition-all resize-y leading-relaxed"
               />
-              <p className="text-[10px] text-slate-500 mt-1">{t('waMessageHint')}</p>
+              <p className="text-[11px] text-slate-500 mt-1.5">{t('waMessageHint')}</p>
             </div>
 
-            <div className="pt-2 border-t border-slate-100 flex justify-end">
+            <div className="pt-4 border-t border-slate-100 flex justify-end">
               <button
                 type="submit"
                 disabled={saving}
-                className="px-5 py-2 bg-[#156b46] hover:bg-[#125839] disabled:opacity-60 text-white text-xs font-bold rounded-xl shadow transition-all flex items-center gap-2"
+                className="px-6 py-2.5 bg-gradient-to-r from-[#156b46] to-[#0e4f33] hover:from-[#0e4f33] hover:to-[#0a3d28] disabled:opacity-60 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-900/20 transition-all flex items-center gap-2"
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {t('waSaveSettings')}
@@ -225,17 +227,19 @@ export default function SettingsScreen({ settings, onSettingsSaved }) {
         </div>
 
         {/* Connection Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Link2 className="w-4 h-4 text-emerald-700" />
+        <div className="bg-white rounded-2xl shadow-md shadow-emerald-900/5 border border-slate-200/80 p-6">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700">
+                <Link2 className="w-4 h-4" />
+              </div>
               <h3 className="text-sm font-bold text-slate-900">{t('waConnection')}</h3>
             </div>
             <button
               type="button"
               onClick={refreshStatus}
               disabled={!isElectron}
-              className="p-1.5 text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg disabled:opacity-40"
+              className="p-2 text-slate-400 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg disabled:opacity-40 transition-all"
               title={t('waRefreshStatus')}
             >
               <RefreshCw className="w-4 h-4" />
@@ -243,13 +247,13 @@ export default function SettingsScreen({ settings, onSettingsSaved }) {
           </div>
 
           {!isElectron ? (
-            <div className="flex items-start gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <div className="flex items-start gap-2.5 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-4">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{t('waDesktopOnly')}</span>
             </div>
           ) : (
             <>
-              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold ${badgeClass}`}>
+              <div className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-full border shadow-sm text-sm font-bold ${badgeClass}`}>
                 {status?.status === 'ready' ? (
                   <CheckCircle2 className="w-4 h-4" />
                 ) : status?.status === 'initializing' || status?.status === 'authenticated' ? (
@@ -261,50 +265,50 @@ export default function SettingsScreen({ settings, onSettingsSaved }) {
               </div>
 
               {status?.number && (
-                <p className="text-xs text-slate-600 mt-3">
+                <p className="text-sm text-slate-600 mt-4">
                   <span className="font-bold">{t('waConnectedAs')}: </span>
                   <span className="font-mono">+{status.number}</span>
                 </p>
               )}
 
               {status?.error && (
-                <div className="mt-3 flex items-start gap-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg p-2.5">
+                <div className="mt-4 flex items-start gap-2.5 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl p-3">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span className="break-words">{status.error}</span>
                 </div>
               )}
 
               {status?.configured && status?.connected && !status.match && (
-                <div className="mt-3 flex items-start gap-2 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
+                <div className="mt-4 flex items-start gap-2.5 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3">
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>{t('waOwnerMismatch')}</span>
                 </div>
               )}
 
               {status?.status === 'ready' && status.match && (
-                <div className="mt-3 flex items-start gap-2 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg p-2.5">
+                <div className="mt-4 flex items-start gap-2.5 text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl p-3">
                   <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>{t('waOwnerMatch')}</span>
                 </div>
               )}
 
               {status?.qr && (
-                <div className="mt-4 flex flex-col items-center">
-                  <div className="p-2 bg-white border border-slate-300 rounded-xl shadow-sm">
-                    <img src={status.qr} alt="WhatsApp login QR code" className="w-44 h-44" />
+                <div className="mt-5 flex flex-col items-center">
+                  <div className="p-3 bg-white border border-slate-200 rounded-2xl shadow-lg ring-4 ring-emerald-50">
+                    <img src={status.qr} alt="WhatsApp login QR code" className="w-44 h-44 rounded-lg" />
                   </div>
-                  <p className="text-[11px] text-slate-600 mt-2 text-center leading-snug">
+                  <p className="text-xs text-slate-600 mt-3 text-center leading-relaxed max-w-xs">
                     {t('waScanInstructions')}
                   </p>
                 </div>
               )}
 
-              <div className="mt-5 flex flex-wrap gap-2">
+              <div className="mt-6 flex flex-wrap gap-2.5">
                 <button
                   type="button"
                   onClick={handleConnect}
                   disabled={busy || status?.status === 'ready' || status?.status === 'initializing'}
-                  className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white text-xs font-bold rounded-xl flex items-center gap-2 transition-all"
+                  className="px-5 py-2.5 bg-gradient-to-r from-[#156b46] to-[#0e4f33] hover:from-[#0e4f33] hover:to-[#0a3d28] disabled:opacity-50 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-900/20 flex items-center gap-2 transition-all"
                 >
                   <Link2 className="w-4 h-4" />
                   {t('waConnect')}
@@ -313,7 +317,7 @@ export default function SettingsScreen({ settings, onSettingsSaved }) {
                   type="button"
                   onClick={handleDisconnect}
                   disabled={busy || !status || status.status === 'idle'}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 text-xs font-bold rounded-xl flex items-center gap-2 transition-all"
+                  className="px-5 py-2.5 bg-white hover:bg-slate-50 disabled:opacity-50 text-slate-700 text-sm font-bold rounded-xl border border-slate-200 shadow-sm flex items-center gap-2 transition-all"
                 >
                   <Unlink className="w-4 h-4" />
                   {t('waDisconnect')}
