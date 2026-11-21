@@ -208,17 +208,21 @@ export default function PrintableInvoice({
   const renderReceipt = () => (
       <div
         id="printable-receipt"
-        className={`print-area size-${paperSize} bg-white text-black border border-black shadow-xl ${paperSize === 'a5'
+        className={`print-area size-${paperSize} bg-white text-slate-800 border border-emerald-200 shadow-xl ${paperSize === 'a5'
           ? 'w-[138mm] min-h-[195mm] max-h-[200mm] p-3.5 text-[9.5px]'
-          : 'w-[196mm] min-h-[280mm] p-6 text-[11px]'} leading-tight rounded-sm`}
-        style={{ fontFamily: "'Noto Sans Malayalam', sans-serif" }}
+          : 'w-[196mm] min-h-[280mm] p-6 text-[11px]'} leading-tight rounded-md overflow-hidden`}
+        style={{
+          fontFamily: "'Noto Sans Malayalam', sans-serif",
+          WebkitPrintColorAdjust: 'exact',
+          printColorAdjust: 'exact'
+        }}
       >
         {/* Colourful Shop Header + Black Invoice Tag */}
         <div
-          className="pt-2.5 pb-2.5 mb-2 border-b-2 border-black rounded-t-md px-2.5"
+          className="pt-2.5 pb-2 mb-2 border-b-2 border-amber-500 rounded-md px-2.5"
           style={{
-            background: 'linear-gradient(135deg, #ecfdf5 0%, #fef9c3 100%)',
-            borderTop: '3px solid #156b46',
+            background: 'linear-gradient(135deg, #dcfce7 0%, #fef9c3 55%, #ffedd5 100%)',
+            borderTop: '4px solid #156b46',
             WebkitPrintColorAdjust: 'exact',
             printColorAdjust: 'exact',
           }}
@@ -248,96 +252,163 @@ export default function PrintableInvoice({
             </div>
           </div>
           <div className="text-center mt-2">
-            <span className="border border-black bg-white text-black px-2.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wider inline-block">
+            <span
+              className="px-2.5 py-0.5 text-[8.5px] font-black uppercase tracking-wider inline-block rounded-sm"
+              style={{
+                background: '#156b46',
+                color: '#ffffff',
+                border: '1px solid #0e4f33',
+                WebkitPrintColorAdjust: 'exact',
+                printColorAdjust: 'exact',
+              }}
+            >
               {lang === 'ml' ? 'വാഴപ്പഴ വിൽപന ഇൻവോയ്സ്' : 'WHOLESALE BILL / INVOICE'}
             </span>
           </div>
         </div>
         {/* Bill Metadata & Customer Info */}
-        <div className="grid grid-cols-2 gap-2 my-2 text-[9px] text-black border-b border-black pb-1.5">
+        <div
+          className="grid grid-cols-2 gap-2 my-2 text-[9px] text-slate-700 px-2 py-1.5 rounded-md"
+          style={{
+            background: '#ecfdf5',
+            border: '1px solid #a7f3d0',
+            borderLeft: '4px solid #156b46',
+            WebkitPrintColorAdjust: 'exact',
+            printColorAdjust: 'exact',
+          }}
+        >
           <div>
-            <p><span className="font-bold">{t('billNo')}: </span><span className="font-mono font-bold text-xs text-black">{bill.bill_number}</span></p>
-            <p><span className="font-bold">{t('invoiceDate')}: </span><span className="text-black">{formattedDateTime}</span></p>
+            <p>
+              <span className="font-bold" style={{ color: '#065f46' }}>{t('billNo')}: </span>
+              <span className="font-mono font-bold text-xs" style={{ color: '#156b46' }}>{bill.bill_number}</span>
+            </p>
+            <p>
+              <span className="font-bold" style={{ color: '#065f46' }}>{t('invoiceDate')}: </span>
+              <span style={{ color: '#374151' }}>{formattedDateTime}</span>
+            </p>
           </div>
           <div className="text-right">
-            <p><span className="font-bold">{t('customer')}: </span><span className="font-bold text-[10.5px] text-black">{customerName}</span></p>
+            <p>
+              <span className="font-bold" style={{ color: '#065f46' }}>{t('customer')}: </span>
+              <span className="font-bold text-[10.5px]" style={{ color: '#0e4f33' }}>{customerName}</span>
+            </p>
             {bill.customer_phone && (
-              <p><span className="font-bold">{t('phone')}: </span><span className="font-mono text-black">{bill.customer_phone}</span></p>
+              <p>
+                <span className="font-bold" style={{ color: '#065f46' }}>{t('phone')}: </span>
+                <span className="font-mono" style={{ color: '#374151' }}>{bill.customer_phone}</span>
+              </p>
             )}
             {bill.permanent_shop_name && (
-              <p><span className="font-bold">{t('shopName')}: </span><span className="text-black">{bill.permanent_shop_name}</span></p>
+              <p>
+                <span className="font-bold" style={{ color: '#065f46' }}>{t('shopName')}: </span>
+                <span style={{ color: '#374151' }}>{bill.permanent_shop_name}</span>
+              </p>
             )}
             {bill.permanent_address && (
-              <p className="text-[8px] text-black">{bill.permanent_address}</p>
+              <p className="text-[8px]" style={{ color: '#4b5563' }}>{bill.permanent_address}</p>
             )}
           </div>
         </div>
         {/* Line Items Table */}
-        <table className="print-table w-full border-collapse border border-black my-1.5 text-[9px] text-black">
+        <table className="print-table w-full border-collapse border border-emerald-200 my-1.5 text-[9px] text-slate-800">
           <thead>
-            <tr className="border-b-2 border-black bg-white text-black font-bold">
-              <th className="border border-black px-1 py-1 text-center w-5">#</th>
-              <th className="border border-black px-1.5 py-1 text-left">{t('variety')}</th>
-              <th className="border border-black px-1 py-1 text-center w-9">{t('bunches')}</th>
-              <th className="border border-black px-1 py-1 text-right w-13">{t('grossWeight')}</th>
-              <th className="border border-black px-1 py-1 text-right w-13">{t('totalWaste')}</th>
-              <th className="border border-black px-1 py-1 text-right w-13">{t('netWeight')}</th>
-              <th className="border border-black px-1 py-1 text-right w-11">{t('ratePerKg')}</th>
-              <th className="border border-black px-1.5 py-1 text-right w-15">{t('subtotal')}</th>
+            <tr
+              className="border-b-2 border-emerald-700 font-bold"
+              style={{
+                background: '#156b46',
+                color: '#ffffff',
+                WebkitPrintColorAdjust: 'exact',
+                printColorAdjust: 'exact',
+              }}
+            >
+              <th className="border border-emerald-200 px-1 py-1 text-center w-5">#</th>
+              <th className="border border-emerald-200 px-1.5 py-1 text-left">{t('variety')}</th>
+              <th className="border border-emerald-200 px-1 py-1 text-center w-9">{t('bunches')}</th>
+              <th className="border border-emerald-200 px-1 py-1 text-right w-13">{t('grossWeight')}</th>
+              <th className="border border-emerald-200 px-1 py-1 text-right w-13">{t('totalWaste')}</th>
+              <th className="border border-emerald-200 px-1 py-1 text-right w-13">{t('netWeight')}</th>
+              <th className="border border-emerald-200 px-1 py-1 text-right w-11">{t('ratePerKg')}</th>
+              <th className="border border-emerald-200 px-1.5 py-1 text-right w-15">{t('subtotal')}</th>
             </tr>
           </thead>
           <tbody>
             {bill.items && bill.items.map((item, index) => (
-              <tr key={item.id || index} className="border-b border-black text-black">
-                <td className="border border-black px-1 py-0.5 text-center font-mono">{index + 1}</td>
-                <td className="border border-black px-1.5 py-0.5 font-bold">
+              <tr
+                key={item.id || index}
+                className="border-b border-emerald-200"
+                style={{
+                  background: index % 2 === 0 ? '#f0fdf4' : '#ffffff',
+                  WebkitPrintColorAdjust: 'exact',
+                  printColorAdjust: 'exact',
+                }}
+              >
+                <td className="border border-emerald-200 px-1 py-0.5 text-center font-mono">{index + 1}</td>
+                <td className="border border-emerald-200 px-1.5 py-0.5 font-bold" style={{ color: '#065f46' }}>
                   {lang === 'ml'
                     ? `${item.name_ml || item.name_en}${item.name_en && item.name_ml ? ` (${item.name_en})` : ''}`
                     : `${item.name_en || item.name_ml}${item.name_ml && item.name_en ? ` (${item.name_ml})` : ''}`}
                   {item.waste_per_bunch_kg > 0 && (
-                    <span className="block text-[7.5px] font-normal text-black">
+                    <span className="block text-[7.5px] font-normal" style={{ color: '#6b7280' }}>
                       ({item.waste_per_bunch_kg} {lang === 'ml' ? 'kg/കുല കിഴിവ്' : 'kg/bunch waste'})
                     </span>
                   )}
                 </td>
-                <td className="border border-black px-1 py-0.5 text-center font-mono font-bold">{item.bunch_quantity}</td>
-                <td className="border border-black px-1 py-0.5 text-right font-mono">{Number(item.gross_weight_kg).toFixed(2)}</td>
-                <td className="border border-black px-1 py-0.5 text-right font-mono">{Number(item.total_waste_kg).toFixed(2)}</td>
-                <td className="border border-black px-1 py-0.5 text-right font-mono font-bold">{Number(item.net_weight_kg).toFixed(2)}</td>
-                <td className="border border-black px-1 py-0.5 text-right font-mono">₹{Number(item.rate_per_kg).toFixed(2)}</td>
-                <td className="border border-black px-1.5 py-0.5 text-right font-mono font-bold">₹{Number(item.subtotal).toFixed(2)}</td>
+                <td className="border border-emerald-200 px-1 py-0.5 text-center font-mono font-bold">{item.bunch_quantity}</td>
+                <td className="border border-emerald-200 px-1 py-0.5 text-right font-mono">{Number(item.gross_weight_kg).toFixed(2)}</td>
+                <td className="border border-emerald-200 px-1 py-0.5 text-right font-mono">{Number(item.total_waste_kg).toFixed(2)}</td>
+                <td className="border border-emerald-200 px-1 py-0.5 text-right font-mono font-bold" style={{ color: '#047857' }}>{Number(item.net_weight_kg).toFixed(2)}</td>
+                <td className="border border-emerald-200 px-1 py-0.5 text-right font-mono">₹{Number(item.rate_per_kg).toFixed(2)}</td>
+                <td className="border border-emerald-200 px-1.5 py-0.5 text-right font-mono font-bold" style={{ color: '#b45309' }}>₹{Number(item.subtotal).toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
           <tfoot>
-            <tr className="border-t-2 border-black font-bold bg-white text-black">
-              <td colSpan={2} className="border border-black px-1.5 py-1 text-right font-black uppercase text-[9px]">
+            <tr
+              className="border-t-2 border-emerald-700 font-bold"
+              style={{
+                background: 'linear-gradient(90deg, #fef3c7 0%, #dcfce7 100%)',
+                color: '#78350f',
+                WebkitPrintColorAdjust: 'exact',
+                printColorAdjust: 'exact',
+              }}
+            >
+              <td colSpan={2} className="border border-emerald-200 px-1.5 py-1 text-right font-black uppercase text-[9px]">
                 {lang === 'ml' ? 'ആകെ തുക / Totals:' : 'Totals:'}
               </td>
-              <td className="border border-black px-1 py-1 text-center font-mono font-bold">{bill.items?.reduce((s, it) => s + (it.bunch_quantity || 0), 0) || 0}</td>
-              <td className="border border-black px-1 py-1 text-right font-mono">{Number(bill.total_gross_weight).toFixed(2)}</td>
-              <td className="border border-black px-1 py-1 text-right font-mono">{Number(bill.total_waste_weight).toFixed(2)}</td>
-              <td className="border border-black px-1 py-1 text-right font-mono font-bold">{Number(bill.total_net_weight).toFixed(2)}</td>
-              <td className="border border-black px-1 py-1 text-center text-[7.5px] text-black">—</td>
-              <td className="border border-black px-1.5 py-1 text-right font-mono font-black text-[11px]">₹{Number(bill.grand_total).toFixed(2)}</td>
+              <td className="border border-emerald-200 px-1 py-1 text-center font-mono font-bold">{bill.items?.reduce((s, it) => s + (it.bunch_quantity || 0), 0) || 0}</td>
+              <td className="border border-emerald-200 px-1 py-1 text-right font-mono">{Number(bill.total_gross_weight).toFixed(2)}</td>
+              <td className="border border-emerald-200 px-1 py-1 text-right font-mono">{Number(bill.total_waste_weight).toFixed(2)}</td>
+              <td className="border border-emerald-200 px-1 py-1 text-right font-mono font-bold">{Number(bill.total_net_weight).toFixed(2)}</td>
+              <td className="border border-emerald-200 px-1 py-1 text-center text-[7.5px]">—</td>
+              <td className="border border-emerald-200 px-1.5 py-1 text-right font-mono font-black text-[11px]" style={{ color: '#065f46' }}>₹{Number(bill.grand_total).toFixed(2)}</td>
             </tr>
           </tfoot>
         </table>
         {/* QR & Amount in Words */}
-        <div className="grid grid-cols-12 gap-2 my-1.5 border border-black p-1.5 items-center text-black">
-          <div className="col-span-5 flex items-center space-x-2 border-r border-black pr-1.5">
+        <div
+          className="grid grid-cols-12 gap-2 my-1.5 p-1.5 items-center rounded-md"
+          style={{
+            background: '#f0fdf9',
+            border: '1px solid #6ee7b7',
+            WebkitPrintColorAdjust: 'exact',
+            printColorAdjust: 'exact',
+          }}
+        >
+          <div className="col-span-5 flex items-center space-x-2 border-r border-emerald-300 pr-1.5">
             {qrDataUrl ? (
-              <div className="border border-black p-0.5 bg-white shrink-0">
+              <div className="border border-emerald-200 p-0.5 bg-white shrink-0">
                 <img src={qrDataUrl} alt="UPI QR" className="w-18 h-18 sm:w-20 sm:h-20 object-contain block" />
               </div>
             ) : (
-              <div className="w-18 h-18 border border-black flex items-center justify-center text-[7.5px]">Loading QR...</div>
+              <div className="w-18 h-18 border border-emerald-200 flex items-center justify-center text-[7.5px]">Loading QR...</div>
             )}
             <div className="text-[7.5px] leading-tight">
-              <p className="font-bold uppercase tracking-wider text-[8px]">{t('scanAndPay')}</p>
-              <p className="font-bold mt-0.5">Amount: <span className="font-mono font-black text-[9px]">₹{Number(bill.grand_total).toFixed(2)}</span></p>
-              <p className="font-mono text-[7px] mt-0.5 break-all">Vyapar.178760240373@hdfcbank</p>
-              <p className="text-[6.5px] mt-0.5">{t('scanSupportedApps')}</p>
+              <p className="font-bold uppercase tracking-wider text-[8px]" style={{ color: '#047857' }}>{t('scanAndPay')}</p>
+              <p className="font-bold mt-0.5" style={{ color: '#374151' }}>
+                Amount: <span className="font-mono font-black text-[9px]" style={{ color: '#b45309' }}>₹{Number(bill.grand_total).toFixed(2)}</span>
+              </p>
+              <p className="font-mono text-[7px] mt-0.5 break-all" style={{ color: '#4b5563' }}>Vyapar.178760240373@hdfcbank</p>
+              <p className="text-[6.5px] mt-0.5" style={{ color: '#6b7280' }}>{t('scanSupportedApps')}</p>
             </div>
           </div>
           <div className="col-span-7 pl-1 flex flex-col justify-between h-full">
@@ -347,28 +418,47 @@ export default function PrintableInvoice({
                 - {lang === 'ml' ? 'തണ്ട് കിഴിവ് കഴിച്ചുള്ള ശുദ്ധ തൂക്കത്തിനാണ് വില കണക്കാക്കിയിട്ടുള്ളത്.' : 'Billed only on net weight after deducting stem/stalk waste.'}
               </div>
             </div>
-            <div className="mt-1 pt-1 border-t flex items-center justify-between">
-              <span className="font-black uppercase text-[9.5px]">{lang === 'ml' ? 'അടയ്ക്കേണ്ട തുക:' : 'Net Payable:'}</span>
-              <span className="font-mono font-black text-sm">₹{Number(bill.grand_total).toFixed(2)}</span>
+            <div
+              className="mt-1 pt-1 pb-0.5 px-1.5 border-t border-emerald-300 flex items-center justify-between rounded-sm"
+              style={{ background: '#fef3c7', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
+            >
+              <span className="font-black uppercase text-[9.5px]" style={{ color: '#92400e' }}>
+                {lang === 'ml' ? 'അടയ്ക്കേണ്ട തുക:' : 'Net Payable:'}
+              </span>
+              <span className="font-mono font-black text-sm" style={{ color: '#065f46' }}>₹{Number(bill.grand_total).toFixed(2)}</span>
             </div>
           </div>
         </div>
         {/* Footer */}
-        <div className="border-t text-[8px] pt-1 mt-1">
+        <div className="border-t border-emerald-300 text-[8px] pt-1 mt-1">
           <div className="grid grid-cols-2 gap-2 mb-3 items-center">
-            <div className="border border-black border-dashed p-1 rounded bg-white">
-              <p className="font-black text-[9px] tracking-wide">{lang === 'ml' ? 'വാഴയിലകൾ ഓർഡർ അനുസരിച്ച് നൽകുന്നതാണ്' : 'Banana Leaves are sold based on order'}</p>
-              <p className="text-[7.5px] font-semibold mt-0.5">{lang === 'ml' ? 'Banana Leaves are sold based on order' : 'വാഴയിലകൾ ഓർഡർ അനുസരിച്ച് നൽകുന്നതാണ്'}</p>
+            <div
+              className="border border-amber-400 border-dashed p-1 rounded"
+              style={{ background: '#fffbeb', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
+            >
+              <p className="font-black text-[9px] tracking-wide" style={{ color: '#92400e' }}>
+                {lang === 'ml' ? 'വാഴയിലകൾ ഓർഡർ അനുസരിച്ച് നൽകുന്നതാണ്' : 'Banana Leaves are sold based on order'}
+              </p>
+              <p className="text-[7.5px] font-semibold mt-0.5" style={{ color: '#b45309' }}>
+                {lang === 'ml' ? 'Banana Leaves are sold based on order' : 'വാഴയിലകൾ ഓർഡർ അനുസരിച്ച് നൽകുന്നതാണ്'}
+              </p>
             </div>
             <div className="text-right flex flex-col justify-between">
-              <p className="font-bold text-[8px]">{lang === 'ml' ? 'കെ.ആർ.എസ് പ്ലാന്റയിൻ മർച്ചന്റിന് വേണ്ടി' : 'For KRS PLANTAIN MERCHANT & COMMISSION AGENT'}</p>
+              <p className="font-bold text-[8px]" style={{ color: '#065f46' }}>
+                {lang === 'ml' ? 'കെ.ആർ.എസ് പ്ലാന്റയിൻ മർച്ചന്റിന് വേണ്ടി' : 'For KRS PLANTAIN MERCHANT & COMMISSION AGENT'}
+              </p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4 pt-1.5 border-t-dotted text-center">
-            <p className="font-semibold">{t('customerSignature')}</p>
-            <p className="font-semibold text-right">{t('authorizedSignatory')}</p>
+            <p className="font-semibold" style={{ color: '#065f46' }}>{t('customerSignature')}</p>
+            <p className="font-semibold text-right" style={{ color: '#065f46' }}>{t('authorizedSignatory')}</p>
           </div>
-          <div className="text-center mt-1 text-[7.5px] italic">{t('thankYou')}</div>
+          <div
+            className="text-center mt-1 text-[7.5px] font-bold text-white py-0.5 rounded-sm"
+            style={{ background: '#156b46', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
+          >
+            {t('thankYou')}
+          </div>
         </div>
       </div>
   );

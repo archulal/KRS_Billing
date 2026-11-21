@@ -144,19 +144,21 @@ input[type="number"] {
     padding: 4mm !important;
   }
 
-  /* 5. Inkjet ink-saver: sharp crisp black text, thin borders, no heavy dark fills */
+  /* 5. Keep the KRS green/gold invoice colours in print & PDF output */
+  .print-area,
+  .print-area * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   .print-table {
     width: 100% !important;
     border-collapse: collapse !important;
   }
   .print-table th, .print-table td {
-    border: 1px solid #111111 !important;
     padding: 3px 5px !important;
-    color: #000000 !important;
-    background-color: transparent !important;
   }
   .print-table th {
     font-weight: 700 !important;
-    border-bottom: 2px solid #000000 !important;
   }
 }
