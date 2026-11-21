@@ -24,7 +24,10 @@
     "wholesale",
     "kerala"
   ],
-  "author": "KRS Banana Wholesale",
+  "author": {
+    "name": "KRS Banana Wholesale",
+    "email": "your-business-email@example.com"
+  },
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
@@ -54,6 +57,7 @@
   "build": {
     "appId": "com.krs.bananabilling",
     "productName": "KRS Banana Wholesale Billing",
+    "icon": "release/KRS Banana Wholesale Billing Badge.png",
     "directories": {
       "output": "release"
     },
@@ -77,11 +81,11 @@
       ]
     },
     "linux": {
+      "icon": "build/icons",
       "target": [
         "AppImage",
         "deb"
-      ],
-      "category": "Office"
+      ]
     }
   }
 }
