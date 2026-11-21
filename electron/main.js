@@ -187,14 +187,15 @@ ipcMain.handle('print-to-printer', async (event, options = {}) => {
 // <div id="printable-receipt" className="... size-a4">
 //
 // ---------------------------------------------------------------
-async function prepareInvoiceForPrinting(contents, requestedSize) {
+async function prepareInvoiceForPrinting(contents, requestedSize, elementId = 'printable-receipt') {
   return contents.executeJavaScript(`
     (async () => {
-      const receipt = document.getElementById('printable-receipt');
+      const receiptId = ${JSON.stringify(elementId || 'printable-receipt')};
+      const receipt = document.getElementById(receiptId);
 
       if (!receipt) {
         throw new Error(
-          'Invoice element #printable-receipt was not found'
+          'Printable element #' + receiptId + ' was not found'
         );
       }
 
@@ -293,12 +294,12 @@ async function prepareInvoiceForPrinting(contents, requestedSize) {
             visibility: hidden !important;
           }
 
-          #printable-receipt,
-          #printable-receipt * {
+          #${elementId},
+          #${elementId} * {
             visibility: visible !important;
           }
 
-          #printable-receipt {
+          #${elementId} {
             position: relative !important;
             display: block !important;
             margin: 0 auto !important;
@@ -320,7 +321,7 @@ async function prepareInvoiceForPrinting(contents, requestedSize) {
             box-shadow: none !important;
           }
 
-          #printable-receipt img {
+          #${elementId} img {
             max-width: 100%;
           }
         }
@@ -412,6 +413,51 @@ ipcMain.handle('generate-bill-pdf', async (event, options = {}) => {
 });
 
 // ---------------------------------------------------------------
+// IPC: Generate a PDF of the visible customer ledger statement.
+// Mirrors the bill PDF pipeline, but uses the A4 ledger element.
+// ---------------------------------------------------------------
+ipcMain.handle('generate-ledger-pdf', async (event, options = {}) => {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return { success: false, error: 'Window unavailable' };
+  }
+
+  const contents = mainWindow.webContents;
+  let prepared = false;
+
+  try {
+    const preparation = await prepareInvoiceForPrinting(contents, 'A4', 'printable-ledger');
+    if (!preparation.success) throw new Error('Ledger is not visible');
+
+    prepared = true;
+
+    const pdfBuffer = await contents.printToPDF({
+      pageSize: 'A4',
+      printBackground: true,
+      margins: { top: 0, bottom: 0, left: 0, right: 0 },
+      preferCSSPageSize: true
+    });
+
+    if (!pdfBuffer || pdfBuffer.length === 0) {
+      throw new Error('Generated PDF is empty');
+    }
+
+    const pdfDir = path.join(app.getPath('userData'), 'ledger-pdfs');
+    await fs.promises.mkdir(pdfDir, { recursive: true });
+
+    const safeName = String(options.fileName || 'ledger').replace(/[^A-Za-z0-9_-]/g, '_');
+    const filePath = path.join(pdfDir, `${safeName}.pdf`);
+    await fs.promises.writeFile(filePath, pdfBuffer);
+
+    return { success: true, filePath };
+  } catch (err) {
+    console.error('[KRS PDF] Failed to generate ledger PDF:', err);
+    return { success: false, error: err.message || 'Could not generate PDF' };
+  } finally {
+    if (prepared) await restoreInvoicePage(contents);
+  }
+});
+
+// ---------------------------------------------------------------
 // IPC: Silent invoice printing
 //
 // Flow:
@@ -446,7 +492,8 @@ ipcMain.handle('print-silent', async (event, options = {}) => {
 
     const preparation = await prepareInvoiceForPrinting(
       contents,
-      options.paperSize
+      options.paperSize,
+      options.elementId
     );
 
     if (!preparation.success) {

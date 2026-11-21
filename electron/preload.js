@@ -18,6 +18,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Generate a PDF of the currently visible invoice for WhatsApp sharing
   generateBillPdf: (options) => ipcRenderer.invoke('generate-bill-pdf', options),
 
+  // Generate a PDF of the currently visible customer ledger statement
+  generateLedgerPdf: (options) => ipcRenderer.invoke('generate-ledger-pdf', options),
+
   // WhatsApp Web automation (main process owns the client/session)
   whatsapp: {
     getStatus: () => ipcRenderer.invoke('whatsapp:get-status'),

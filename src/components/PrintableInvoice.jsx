@@ -78,10 +78,19 @@ export default function PrintableInvoice({
     setCustomerName(name);
   }, [bill, customerName, mode]);
 
-  // 3️⃣ Generate QR code (black/white)
+  // 3️⃣ Generate QR code (black/white) for the remaining balance
   useEffect(() => {
     if (bill?.grand_total != null) {
-      const amt = Number(bill.grand_total).toFixed(2);
+      const total = Number(bill.grand_total) || 0;
+      const paid = Math.min(Math.max(Number(bill.amount_paid) || 0, 0), total);
+      const due = Math.max(0, Math.round((total - paid - (Number(bill.advance_adjusted) || 0)) * 100) / 100);
+
+      if (due <= 0) {
+        setQrDataUrl('');
+        return;
+      }
+
+      const amt = due.toFixed(2);
       const upi = `upi://pay?pa=Vyapar.178760240373@hdfcbank&pn=KRS%20Plantain%20Merchant&mc=8999&am=${amt}&cu=INR&tn=Invoice%20${encodeURIComponent(bill.bill_number)}`;
       QRCode.toDataURL(upi, { width: 140, margin: 1, errorCorrectionLevel: 'M' })
         .then(setQrDataUrl)
@@ -194,6 +203,20 @@ export default function PrintableInvoice({
     ? new Date(bill.date).toLocaleString(lang === 'ml' ? 'ml-IN' : 'en-IN', { dateStyle: 'medium', timeStyle: 'short' })
     : new Date().toLocaleString();
 
+  const billTotal = Number(bill.grand_total) || 0;
+  const amountPaid = Math.min(Math.max(Number(bill.amount_paid) || 0, 0), billTotal);
+  const balanceDue = Math.max(0, Math.round((billTotal - amountPaid) * 100) / 100);
+  const advanceAdjusted = Math.max(0, Number(bill.advance_adjusted) || 0);
+  const advanceBalance = Math.max(0, Number(bill.advance_balance) || 0);
+  const previousBalance = Math.round((Number(bill.previous_balance) || 0) * 100) / 100;
+  const oldDuesPaid = Math.max(0, Number(bill.old_dues_paid) || 0);
+  const isLedgerCustomer = !!bill.customer_id || previousBalance !== 0 || advanceBalance > 0 || oldDuesPaid > 0;
+  const outstandingAfter = bill.customer_outstanding_after != null
+    ? Math.round(Number(bill.customer_outstanding_after) * 100) / 100
+    : Math.round((previousBalance + billTotal - amountPaid - oldDuesPaid) * 100) / 100;
+  const netDue = Math.max(0, Math.round((balanceDue - advanceAdjusted) * 100) / 100);
+  const isFullyPaid = (amountPaid > 0 && balanceDue <= 0) || (advanceAdjusted > 0 && netDue <= 0);
+
   const renderReceipt = () => (
       <div
         id="printable-receipt"
@@ -296,6 +319,40 @@ export default function PrintableInvoice({
             {bill.permanent_address && (
               <p className="text-[8px]" style={{ color: '#4b5563' }}>{bill.permanent_address}</p>
             )}
+            {previousBalance !== 0 && (
+              <p className="mt-0.5">
+                <span
+                  className="inline-block px-1.5 py-0.5 rounded font-black text-[8px]"
+                  style={{
+                    background: previousBalance > 0 ? '#fee2e2' : '#d1fae5',
+                    color: previousBalance > 0 ? '#b91c1c' : '#065f46',
+                    WebkitPrintColorAdjust: 'exact',
+                    printColorAdjust: 'exact',
+                  }}
+                >
+                  {previousBalance > 0
+                    ? (lang === 'ml' ? 'മുൻകാല ബാക്കി (Dr)' : 'Previous Due (Dr)')
+                    : (lang === 'ml' ? 'ക്രെഡിറ്റ് ബാലൻസ് (Cr)' : 'Credit Balance (Cr)')}
+                  : ₹{Math.abs(previousBalance).toFixed(2)}
+                </span>
+              </p>
+            )}
+            {isLedgerCustomer && (
+              <p className="mt-0.5">
+                <span
+                  className="inline-block px-1.5 py-0.5 rounded font-black text-[8px]"
+                  style={{
+                    background: outstandingAfter > 0 ? '#fef3c7' : '#dcfce7',
+                    color: outstandingAfter > 0 ? '#92400e' : '#065f46',
+                    WebkitPrintColorAdjust: 'exact',
+                    printColorAdjust: 'exact',
+                  }}
+                >
+                  {lang === 'ml' ? 'ഈ ബില്ലിനു ശേഷമുള്ള ബാക്കി' : 'Outstanding after this bill'}: ₹{Math.abs(outstandingAfter).toFixed(2)}
+                  {outstandingAfter > 0 ? ' Dr' : outstandingAfter < 0 ? ' Cr' : ''}
+                </span>
+              </p>
+            )}
           </div>
         </div>
         {/* Line Items Table */}
@@ -394,7 +451,23 @@ export default function PrintableInvoice({
           }}
         >
           <div className="col-span-5 flex items-center space-x-2 border-r border-emerald-300 pr-1.5">
-            {qrDataUrl ? (
+            {isFullyPaid ? (
+              <div
+                className="w-[72px] h-[72px] shrink-0 rounded-md border-2 flex flex-col items-center justify-center text-center"
+                style={{
+                  borderColor: '#059669',
+                  background: '#ecfdf5',
+                  WebkitPrintColorAdjust: 'exact',
+                  printColorAdjust: 'exact',
+                }}
+              >
+                <span className="text-[22px] font-black leading-none" style={{ color: '#047857' }}>✓</span>
+                <span className="text-[8px] font-black uppercase tracking-wide" style={{ color: '#065f46' }}>PAID</span>
+                <span className="text-[6.5px] font-bold" style={{ color: '#047857' }}>
+                  {lang === 'ml' ? 'തീർപ്പായി' : 'IN FULL'}
+                </span>
+              </div>
+            ) : qrDataUrl ? (
               <div className="border border-emerald-200 p-0.5 bg-white shrink-0">
                 <img src={qrDataUrl} alt="UPI QR" className="w-18 h-18 sm:w-20 sm:h-20 object-contain block" />
               </div>
@@ -402,12 +475,33 @@ export default function PrintableInvoice({
               <div className="w-18 h-18 border border-emerald-200 flex items-center justify-center text-[7.5px]">Loading QR...</div>
             )}
             <div className="text-[7.5px] leading-tight">
-              <p className="font-bold uppercase tracking-wider text-[8px]" style={{ color: '#047857' }}>{t('scanAndPay')}</p>
-              <p className="font-bold mt-0.5" style={{ color: '#374151' }}>
-                Amount: <span className="font-mono font-black text-[9px]" style={{ color: '#b45309' }}>₹{Number(bill.grand_total).toFixed(2)}</span>
+              <p className="font-bold uppercase tracking-wider text-[8px]" style={{ color: '#047857' }}>
+                {isFullyPaid
+                  ? (advanceAdjusted > 0
+                      ? (lang === 'ml' ? 'അഡ്വാൻസ് ക്രമീകരിച്ചു' : 'Advance adjusted')
+                      : (lang === 'ml' ? 'പേയ്മെന്റ് പൂർണ്ണമായി ലഭിച്ചു' : 'Payment received in full'))
+                  : t('scanAndPay')}
               </p>
-              <p className="font-mono text-[7px] mt-0.5 break-all" style={{ color: '#4b5563' }}>Vyapar.178760240373@hdfcbank</p>
-              <p className="text-[6.5px] mt-0.5" style={{ color: '#6b7280' }}>{t('scanSupportedApps')}</p>
+              {!isFullyPaid && (
+                <p className="font-bold mt-0.5" style={{ color: '#374151' }}>
+                  {t('balanceDue')}: <span className="font-mono font-black text-[9px]" style={{ color: '#b45309' }}>₹{balanceDue.toFixed(2)}</span>
+                </p>
+              )}
+              {!isFullyPaid && (
+                <p className="font-mono text-[7px] mt-0.5 break-all" style={{ color: '#4b5563' }}>Vyapar.178760240373@hdfcbank</p>
+              )}
+              <p className="text-[6.5px] mt-0.5" style={{ color: '#6b7280' }}>
+                {isFullyPaid
+                  ? (lang === 'ml' ? 'ബാക്കി തുകയില്ല' : 'No balance remaining')
+                  : t('scanSupportedApps')}
+              </p>
+              {advanceBalance > advanceAdjusted && (
+                <p className="text-[6.5px] mt-0.5 font-bold" style={{ color: '#047857' }}>
+                  {lang === 'ml'
+                    ? `അഡ്വാൻസ് ബാക്കി ₹${(advanceBalance - advanceAdjusted).toFixed(2)}`
+                    : `Advance ₹${(advanceBalance - advanceAdjusted).toFixed(2)} remains`}
+                </p>
+              )}
             </div>
           </div>
           <div className="col-span-7 pl-1 flex flex-col justify-between h-full">
@@ -418,13 +512,66 @@ export default function PrintableInvoice({
               </div>
             </div>
             <div
-              className="mt-1 pt-1 pb-0.5 px-1.5 border-t border-emerald-300 flex items-center justify-between rounded-lg"
+              className="mt-1 pt-1 pb-1 px-1.5 border-t border-emerald-300 rounded-lg"
               style={{ background: '#fef3c7', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
             >
-              <span className="font-black uppercase text-[9.5px]" style={{ color: '#92400e' }}>
-                {lang === 'ml' ? 'അടയ്ക്കേണ്ട തുക:' : 'Net Payable:'}
-              </span>
-              <span className="font-mono font-black text-sm" style={{ color: '#065f46' }}>₹{Number(bill.grand_total).toFixed(2)}</span>
+              <div className="flex items-center justify-between">
+                <span className="font-black uppercase text-[9.5px]" style={{ color: '#92400e' }}>
+                  {lang === 'ml' ? 'അടയ്ക്കേണ്ട തുക:' : 'Net Payable:'}
+                </span>
+                <span className="font-mono font-black text-sm" style={{ color: '#065f46' }}>₹{billTotal.toFixed(2)}</span>
+              </div>
+              {amountPaid > 0 && (
+                <>
+                  <div className="flex items-center justify-between mt-0.5">
+                    <span className="font-bold uppercase text-[8px]" style={{ color: '#047857' }}>{t('amountPaid')}:</span>
+                    <span className="font-mono font-bold text-[9px]" style={{ color: '#047857' }}>₹{amountPaid.toFixed(2)}</span>
+                  </div>
+                  {previousBalance !== 0 && (
+                    <div className="flex items-center justify-between mt-0.5">
+                      <span className="font-bold uppercase text-[8px]" style={{ color: previousBalance > 0 ? '#b91c1c' : '#047857' }}>
+                        {previousBalance > 0
+                          ? (lang === 'ml' ? 'മുൻ ബാക്കി (Dr):' : 'Previous balance (Dr):')
+                          : (lang === 'ml' ? 'ക്രെഡിറ്റ് ബാലൻസ് (Cr):' : 'Credit balance (Cr):')}
+                      </span>
+                      <span className="font-mono font-bold text-[9px]" style={{ color: previousBalance > 0 ? '#b91c1c' : '#047857' }}>
+                        ₹{Math.abs(previousBalance).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {advanceAdjusted > 0 && (
+                    <div className="flex items-center justify-between mt-0.5">
+                      <span className="font-bold uppercase text-[8px]" style={{ color: '#047857' }}>
+                        {lang === 'ml' ? 'അഡ്വാൻസ് ക്രമീകരിച്ചു:' : 'Advance adjusted:'}
+                      </span>
+                      <span className="font-mono font-bold text-[9px]" style={{ color: '#047857' }}>₹{advanceAdjusted.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between mt-0.5 pt-0.5 border-t border-amber-300/70">
+                    <span className="font-black uppercase text-[8.5px]" style={{ color: (advanceAdjusted > 0 ? netDue : balanceDue) > 0 ? '#b91c1c' : '#047857' }}>
+                      {advanceAdjusted > 0
+                        ? (lang === 'ml' ? 'അടച്ചേണ്ട ബാക്കി:' : 'Net balance due:')
+                        : `${t('balanceDue')}:`}
+                    </span>
+                    <span className="font-mono font-black text-[11px]" style={{ color: netDue > 0 ? '#b91c1c' : '#047857' }}>
+                      ₹{(advanceAdjusted > 0 ? netDue : balanceDue).toFixed(2)}
+                    </span>
+                  </div>
+                  {isLedgerCustomer && (
+                    <div
+                      className="flex items-center justify-between mt-1 pt-1 px-1 rounded"
+                      style={{ background: outstandingAfter > 0 ? '#fef3c7' : '#dcfce7', WebkitPrintColorAdjust: 'exact', printColorAdjust: 'exact' }}
+                    >
+                      <span className="font-black uppercase text-[8.5px]" style={{ color: outstandingAfter > 0 ? '#92400e' : '#065f46' }}>
+                        {lang === 'ml' ? 'ബാക്കി ബാലൻസ്' : 'Customer outstanding'}:
+                      </span>
+                      <span className="font-mono font-black text-[10px]" style={{ color: outstandingAfter > 0 ? '#92400e' : '#065f46' }}>
+                        ₹{Math.abs(outstandingAfter).toFixed(2)} {outstandingAfter > 0 ? 'Dr' : outstandingAfter < 0 ? 'Cr' : (lang === 'ml' ? 'തീർപ്പായി' : 'Settled')}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>

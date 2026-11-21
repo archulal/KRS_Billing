@@ -8,6 +8,7 @@ import CustomersScreen from './components/CustomersScreen';
 import VarietiesScreen from './components/VarietiesScreen';
 import SettingsScreen from './components/SettingsScreen';
 import PrintableInvoice from './components/PrintableInvoice';
+import CustomerLedger from './components/CustomerLedger';
 
 export default function App() {
   const { lang, t } = useLanguage();
@@ -20,6 +21,7 @@ export default function App() {
   const [invoiceFromPos, setInvoiceFromPos] = useState(false);
   const [frequentCount, setFrequentCount] = useState(0);
   const [settings, setSettings] = useState(null);
+  const [ledgerCustomer, setLedgerCustomer] = useState(null);
 
   // Fetch initial data
   const fetchBananaTypes = async () => {
@@ -155,6 +157,7 @@ export default function App() {
               fetchPermanentCustomers();
               fetchWalkinCount();
             }}
+            onOpenLedger={(customer) => setLedgerCustomer(customer)}
           />
         )}
 
@@ -171,6 +174,7 @@ export default function App() {
               fetchPermanentCustomers();
               fetchWalkinCount();
             }}
+            onOpenLedger={setLedgerCustomer}
           />
         )}
 
@@ -205,6 +209,16 @@ export default function App() {
           settings={settings}
           closeAfterPrint={invoiceFromPos}
           onClose={() => setActiveInvoice(null)}
+        />
+      )}
+
+      {/* Customer Ledger Overlay */}
+      {ledgerCustomer && (
+        <CustomerLedger
+          key={ledgerCustomer.id}
+          customer={ledgerCustomer}
+          onClose={() => setLedgerCustomer(null)}
+          onLedgerChanged={fetchPermanentCustomers}
         />
       )}
 

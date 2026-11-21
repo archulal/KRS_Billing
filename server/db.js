@@ -92,6 +92,11 @@ function initDatabase() {
       total_waste_weight REAL NOT NULL,
       total_net_weight REAL NOT NULL,
       grand_total REAL NOT NULL,
+      amount_paid REAL NOT NULL DEFAULT 0,
+      advance_adjusted REAL NOT NULL DEFAULT 0,
+      advance_balance REAL NOT NULL DEFAULT 0,
+      previous_balance REAL NOT NULL DEFAULT 0,
+      old_dues_paid REAL NOT NULL DEFAULT 0,
       FOREIGN KEY(customer_id) REFERENCES customers(id) ON DELETE SET NULL,
       FOREIGN KEY(temp_walkin_id) REFERENCES temp_walkin_customers(id) ON DELETE SET NULL
     );
@@ -121,6 +126,28 @@ function initDatabase() {
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL DEFAULT ''
     );
+  `);
+
+  // 7. customer_ledger_entries (manual payments & adjustments)
+  // Bills are derived automatically from the bills table, so a ledger is the
+  // combination of: opening balance + active bills (debit) + manual entries.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS customer_ledger_entries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      customer_id INTEGER NOT NULL,
+      entry_type TEXT NOT NULL DEFAULT 'payment', -- 'payment' | 'adjustment'
+      direction TEXT NOT NULL DEFAULT 'credit',   -- 'credit' reduces due | 'debit' increases due
+      amount REAL NOT NULL,
+      entry_date TEXT NOT NULL,
+      note TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(customer_id) REFERENCES customers(id) ON DELETE CASCADE
+    );
+  `);
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_ledger_customer_date
+    ON customer_ledger_entries (customer_id, entry_date);
   `);
 
   // Auto-migrate any existing Nendran references to Ethan / ഏത്തൻ
@@ -217,6 +244,48 @@ try {
   }
 } catch (e) {
   console.error('[SQLite] Migration error:', e);
+}
+
+// Migration: add opening-balance fields to `customers` if they don't exist
+try {
+  const cols = db.prepare("PRAGMA table_info('customers')").all();
+  if (!cols.some(c => c.name === 'opening_balance')) {
+    console.log('[SQLite] Adding missing `opening_balance` column to customers table');
+    db.exec(`ALTER TABLE customers ADD COLUMN opening_balance REAL NOT NULL DEFAULT 0;`);
+  }
+  if (!cols.some(c => c.name === 'opening_balance_date')) {
+    console.log('[SQLite] Adding missing `opening_balance_date` column to customers table');
+    db.exec(`ALTER TABLE customers ADD COLUMN opening_balance_date TEXT;`);
+  }
+} catch (e) {
+  console.error('[SQLite] Opening-balance migration error:', e);
+}
+
+// Migration: add `amount_paid` and `advance_adjusted` to `bills` if missing
+try {
+  const cols = db.prepare("PRAGMA table_info('bills')").all();
+  if (!cols.some(c => c.name === 'amount_paid')) {
+    console.log('[SQLite] Adding missing `amount_paid` column to bills table');
+    db.exec(`ALTER TABLE bills ADD COLUMN amount_paid REAL NOT NULL DEFAULT 0;`);
+  }
+  if (!cols.some(c => c.name === 'advance_adjusted')) {
+    console.log('[SQLite] Adding missing `advance_adjusted` column to bills table');
+    db.exec(`ALTER TABLE bills ADD COLUMN advance_adjusted REAL NOT NULL DEFAULT 0;`);
+  }
+  if (!cols.some(c => c.name === 'advance_balance')) {
+    console.log('[SQLite] Adding missing `advance_balance` column to bills table');
+    db.exec(`ALTER TABLE bills ADD COLUMN advance_balance REAL NOT NULL DEFAULT 0;`);
+  }
+  if (!cols.some(c => c.name === 'previous_balance')) {
+    console.log('[SQLite] Adding missing `previous_balance` column to bills table');
+    db.exec(`ALTER TABLE bills ADD COLUMN previous_balance REAL NOT NULL DEFAULT 0;`);
+  }
+  if (!cols.some(c => c.name === 'old_dues_paid')) {
+    console.log('[SQLite] Adding missing `old_dues_paid` column to bills table');
+    db.exec(`ALTER TABLE bills ADD COLUMN old_dues_paid REAL NOT NULL DEFAULT 0;`);
+  }
+} catch (e) {
+  console.error('[SQLite] Bill amount-paid migration error:', e);
 }
 
 

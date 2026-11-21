@@ -35,6 +35,16 @@ $$\text{Line Subtotal (₹)} = \text{Net Weight} \times \text{Editable Rate per 
 | **Njalipoovan** | ഞാലിപ്പൂവൻ | ₹52.00 | 0.35 kg |
 | **Palayankodan** | പാളയൻകോടൻ | ₹24.00 | 0.45 kg |
 
+### 5. Customer Ledger & Outstanding Balances
+- POS billing captures the **amount paid** at the counter (defaults to full payment, editable for credit sales) and prints the **balance due** on the invoice.
+- For a saved customer, POS shows their **previous due / advance** live. **Pay All Dues** settles the bill *and* old dues (the extra is recorded in the ledger); **Use Advance** applies an existing credit toward the current bill.
+- Every invoice for a saved customer prints their ledger position at billing time — **Previous Due (Dr)** in red or **Credit Balance (Cr)** in green — and the resulting **Customer Outstanding** after this bill (including Dr/Cr or Settled), both in the customer header and in the payment summary.
+- Every saved customer has a **running ledger**: opening balance + active bills (debit) − payments / credit notes + debit adjustments.
+- A **Dues** column on the Customers screen shows each customer's outstanding amount, with a summary strip for total outstanding.
+- Record **payments received**, **discounts / credit notes** and **extra charges**, filter by date, and edit the opening/carry-forward balance.
+- **Print** the A4 ledger statement or **send it as a PDF on WhatsApp** to the customer's saved number.
+- Cancelled bills are automatically excluded from the ledger and outstanding totals.
+
 ---
 
 ## ⌨️ POS Keyboard Shortcuts

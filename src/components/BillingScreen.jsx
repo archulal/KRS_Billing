@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { 
   Plus, Trash2, Printer, RotateCcw, User, Search, Store, 
-  HelpCircle, AlertCircle, CheckCircle2, ChevronDown, Sparkles, Edit
+  HelpCircle, AlertCircle, CheckCircle2, ChevronDown, Sparkles, Edit, Wallet, BookOpen
 } from 'lucide-react';
 import WalkInCaptureModal from './WalkInCaptureModal';
 
@@ -12,7 +12,8 @@ export default function BillingScreen({
   onBillCreated, 
   refreshStats,
   onOpenCustomerDirectory,
-  onRefreshCustomers
+  onRefreshCustomers,
+  onOpenLedger
 }) {
   const { lang, t, getVarietyName } = useLanguage();
 
@@ -96,6 +97,8 @@ export default function BillingScreen({
   const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [amountPaid, setAmountPaid] = useState('');
+  const [amountPaidTouched, setAmountPaidTouched] = useState(false);
 
   // Initialize with 1 empty row once varieties load
   useEffect(() => {
@@ -175,6 +178,8 @@ export default function BillingScreen({
       setSelectedPermanentCustomer(null);
       setCustomerSearchQuery('');
       setErrorMessage('');
+      setAmountPaidTouched(false);
+      setAmountPaid('0');
     }
   };
 
@@ -196,6 +201,36 @@ export default function BillingScreen({
   billSummary.net = Math.round(billSummary.net * 100) / 100;
   // Wholesale mandi rounding rule: round down to whole integer rupee (e.g. 200.40 -> 200, 200.80 -> 200)
   billSummary.grandTotal = Math.floor(billSummary.rawTotal);
+
+  // Amount collected now: follows the bill total until the operator edits it.
+  useEffect(() => {
+    if (!amountPaidTouched) {
+      setAmountPaid(String(billSummary.grandTotal || 0));
+    }
+  }, [billSummary.grandTotal, amountPaidTouched]);
+
+  // Saved-customer ledger balance: positive = dues, negative = advance/credit.
+  const hasLedgerCustomer = customerType === 'permanent' && !!selectedPermanentCustomer;
+  const selectedOutstanding = hasLedgerCustomer
+    ? Number(selectedPermanentCustomer.outstanding) || 0
+    : 0;
+  const previousDue = Math.max(0, selectedOutstanding);
+  const previousAdvance = Math.max(0, -selectedOutstanding);
+  const maxPayable = billSummary.grandTotal + previousDue;
+
+  const paidAmount = Math.min(
+    Math.max(parseFloat(amountPaid) || 0, 0),
+    maxPayable
+  );
+  const balanceDue = Math.max(
+    0,
+    Math.round((billSummary.grandTotal - paidAmount) * 100) / 100
+  );
+
+  // Money over this bill's total adjusts the customer's old dues.
+  const oldDuesPaid = Math.min(previousDue, Math.max(0, paidAmount - billSummary.grandTotal));
+  const advanceApplied = Math.min(previousAdvance, Math.max(0, billSummary.grandTotal - paidAmount));
+  const projectedBalance = Math.round((selectedOutstanding + billSummary.grandTotal - paidAmount) * 100) / 100;
 
   // Filtered permanent customers for autocomplete
   const filteredCustomers = permanentCustomers.filter((c) => {
@@ -242,6 +277,9 @@ export default function BillingScreen({
         walkin_phone: customerData.phone || '',
         walkin_name: customerData.name || '',
         walkin_shop: customerData.shop || '',
+        amount_paid: paidAmount,
+        advance_adjusted: advanceApplied,
+        advance_balance: previousAdvance,
         items: items
           .filter((row) => row.banana_type_id && (parseFloat(row.gross_weight_kg) || 0) > 0)
           .map((row) => ({
@@ -270,8 +308,11 @@ export default function BillingScreen({
       setCustomerType('walkin');
       setSelectedPermanentCustomer(null);
       setIsWalkInModalOpen(false);
+      setAmountPaidTouched(false);
+      setAmountPaid('0');
 
       if (refreshStats) refreshStats();
+      if (onRefreshCustomers) onRefreshCustomers();
       if (onBillCreated) onBillCreated(createdBill);
 
     } catch (err) {
@@ -358,6 +399,7 @@ export default function BillingScreen({
                 </span>
               </div>
             ) : selectedPermanentCustomer ? (
+              <>
               <div className="bg-emerald-50 border border-emerald-300 rounded-xl px-4 py-2 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-[#156b46] text-white flex items-center justify-center font-bold text-sm">
@@ -377,6 +419,17 @@ export default function BillingScreen({
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5">
+                  {onOpenLedger && (
+                    <button
+                      type="button"
+                      onClick={() => onOpenLedger(selectedPermanentCustomer)}
+                      className="px-2.5 py-1 text-xs font-bold text-[#156b46] hover:bg-emerald-100 rounded-lg transition-all flex items-center gap-1"
+                      title={t('viewLedger')}
+                    >
+                      <BookOpen className="w-3.5 h-3.5" />
+                      <span>{t('ledgerAction')}</span>
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={handleOpenEditCustomer}
@@ -398,6 +451,56 @@ export default function BillingScreen({
                   </button>
                 </div>
               </div>
+
+              {/* Live ledger snapshot for the selected saved customer */}
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                <div className={`rounded-xl border px-3 py-1.5 ${
+                  previousDue > 0
+                    ? 'bg-red-50 border-red-200'
+                    : previousAdvance > 0
+                      ? 'bg-emerald-50 border-emerald-200'
+                      : 'bg-slate-50 border-slate-200'
+                }`}>
+                  <span className="block text-[9px] font-black uppercase tracking-wide text-slate-500">
+                    {previousDue > 0
+                      ? t('previousDue')
+                      : previousAdvance > 0
+                        ? t('previousAdvance')
+                        : t('settled')}
+                  </span>
+                  <span className={`block text-sm font-black tabular-nums ${
+                    previousDue > 0 ? 'text-red-700' : 'text-emerald-700'
+                  }`}>
+                    ₹{(previousDue > 0 ? previousDue : previousAdvance).toLocaleString('en-IN')}
+                  </span>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5">
+                  <span className="block text-[9px] font-black uppercase tracking-wide text-slate-500">
+                    {t('thisBill')}
+                  </span>
+                  <span className="block text-sm font-black tabular-nums text-slate-900">
+                    ₹{billSummary.grandTotal.toLocaleString('en-IN')}
+                  </span>
+                </div>
+
+                <div className={`rounded-xl border px-3 py-1.5 ${
+                  projectedBalance > 0
+                    ? 'bg-amber-50 border-amber-200'
+                    : 'bg-emerald-50 border-emerald-200'
+                }`}>
+                  <span className="block text-[9px] font-black uppercase tracking-wide text-slate-500">
+                    {t('afterPayment')}
+                  </span>
+                  <span className={`block text-sm font-black tabular-nums ${
+                    projectedBalance > 0 ? 'text-amber-700' : 'text-emerald-700'
+                  }`}>
+                    {projectedBalance < 0 ? `${t('advanceAmount')} ` : ''}
+                    ₹{Math.abs(projectedBalance).toLocaleString('en-IN')}
+                  </span>
+                </div>
+              </div>
+              </>
             ) : (
               <div className="relative">
                 <div className="flex items-center relative">
@@ -752,23 +855,117 @@ export default function BillingScreen({
 
         </div>
 
-        {/* Large Action Bar */}
-        <div className="mt-4 pt-4 border-t border-emerald-700/50 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="text-xs text-emerald-200/90 font-medium">
-            {lang === 'ml'
-              ? 'F9 അല്ലെങ്കിൽ Ctrl+S അമർത്തി ബിൽ സേവ് ചെയ്ത് പ്രിവ്യൂ കാണാം.'
-              : 'Press F9 or Ctrl+S to save the bill and open its preview.'}
+        {/* Checkout Action Bar */}
+        <div className="mt-4 pt-4 border-t border-emerald-700/50 flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+
+          {/* Payment status */}
+          <div className="flex flex-col gap-2">
+            <div className={`self-start inline-flex items-center gap-3 rounded-2xl px-4 h-12 ring-1 ${
+              balanceDue > 0
+                ? 'bg-amber-400/15 ring-amber-300/40'
+                : 'bg-emerald-400/15 ring-emerald-300/40'
+            }`}>
+              <span className="text-[10px] font-black uppercase tracking-[0.12em] text-emerald-200">
+                {hasLedgerCustomer ? t('billBalance') : t('balanceDue')}
+              </span>
+              <span className={`text-xl font-black tabular-nums ${balanceDue > 0 ? 'text-amber-300' : 'text-emerald-300'}`}>
+                ₹{balanceDue.toLocaleString('en-IN')}
+              </span>
+            </div>
+            <span className="text-[11px] text-emerald-200/80 font-medium">
+              {t('posPaymentHint')}
+            </span>
           </div>
 
-          <button
-            type="button"
-            onClick={handleSaveAndPrintClick}
-            disabled={isSaving}
-            className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-amber-300 to-amber-400 hover:from-amber-400 hover:to-amber-500 active:from-amber-500 text-emerald-950 font-black text-sm rounded-xl shadow-lg shadow-amber-900/20 transition-all flex items-center justify-center gap-2 transform active:scale-95"
-          >
-            <Printer className="w-5 h-5 text-emerald-950" />
-            <span>{isSaving ? t('saving') : t('saveAndPrint')}</span>
-          </button>
+          {/* Amount paid + Save & Print */}
+          <div className="flex flex-col sm:flex-row sm:items-end gap-3 w-full lg:w-auto rounded-2xl bg-emerald-950/25 ring-1 ring-white/10 p-3">
+
+            <div className="flex-1 sm:flex-none">
+              <label htmlFor="pos-amount-paid" className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-emerald-200 mb-1.5">
+                <Wallet className="w-3.5 h-3.5 text-amber-300" />
+                {t('amountPaid')}
+              </label>
+              <div className="flex items-stretch gap-2">
+                <div className="relative flex-1 sm:flex-none">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-900/70 font-black text-sm pointer-events-none">₹</span>
+                  <input
+                    id="pos-amount-paid"
+                    type="number"
+                    min="0"
+                    max={maxPayable}
+                    step="1"
+                    inputMode="decimal"
+                    value={amountPaid}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => {
+                      setAmountPaidTouched(true);
+                      setAmountPaid(e.target.value);
+                    }}
+                    className="w-full sm:w-40 h-12 pl-8 pr-3 bg-white border-2 border-amber-300 rounded-xl text-lg font-black text-emerald-950 tabular-nums focus:ring-4 focus:ring-amber-300/30 focus:border-amber-400 outline-none transition-all"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAmountPaidTouched(false);
+                    setAmountPaid(String(billSummary.grandTotal));
+                  }}
+                  className="h-12 px-3.5 rounded-xl bg-white/10 hover:bg-white/20 ring-1 ring-white/25 text-white text-xs font-black whitespace-nowrap transition-all"
+                >
+                  {t('payFull')}
+                </button>
+                {previousDue > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAmountPaidTouched(true);
+                      setAmountPaid(String(maxPayable));
+                    }}
+                    className="h-12 px-3.5 rounded-xl bg-amber-300/20 hover:bg-amber-300/30 ring-1 ring-amber-300/50 text-amber-200 text-xs font-black whitespace-nowrap transition-all"
+                  >
+                    {t('payAllDues')}
+                  </button>
+                )}
+                {previousAdvance > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAmountPaidTouched(true);
+                      setAmountPaid(String(Math.max(0, billSummary.grandTotal - previousAdvance)));
+                    }}
+                    className="h-12 px-3.5 rounded-xl bg-emerald-300/20 hover:bg-emerald-300/30 ring-1 ring-emerald-300/50 text-emerald-200 text-xs font-black whitespace-nowrap transition-all"
+                  >
+                    {t('useAdvance')}
+                  </button>
+                )}
+              </div>
+              {oldDuesPaid > 0 && (
+                <p className="mt-1.5 text-[10px] font-bold text-amber-300">
+                  ₹{oldDuesPaid.toLocaleString('en-IN')} {t('adjustsOldDues')}
+                </p>
+              )}
+              {oldDuesPaid === 0 && advanceApplied > 0 && (
+                <p className="mt-1.5 text-[10px] font-bold text-emerald-300">
+                  ₹{advanceApplied.toLocaleString('en-IN')} {t('advanceAdjusted')}
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <button
+                type="button"
+                onClick={handleSaveAndPrintClick}
+                disabled={isSaving}
+                className="w-full sm:w-auto h-12 px-8 bg-gradient-to-r from-amber-300 to-amber-400 hover:from-amber-400 hover:to-amber-500 active:from-amber-500 text-emerald-950 font-black text-sm rounded-xl shadow-lg shadow-amber-900/20 transition-all flex items-center justify-center gap-2 transform active:scale-95 disabled:opacity-60 whitespace-nowrap"
+              >
+                <Printer className="w-5 h-5 text-emerald-950" />
+                <span>{isSaving ? t('saving') : t('saveAndPrint')}</span>
+              </button>
+              <span className="text-[10px] text-emerald-200/70 font-semibold text-center">
+                {lang === 'ml' ? 'F9 അല്ലെങ്കിൽ Ctrl+S' : 'F9 or Ctrl+S'}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 

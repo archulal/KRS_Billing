@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { 
   Users, UserCheck, UserPlus, Search, Phone, Store, MapPin, 
-  Sparkles, Award, ArrowUpRight, CheckCircle2, AlertCircle, Trash2, Edit 
+  Sparkles, Award, ArrowUpRight, CheckCircle2, AlertCircle, Trash2, Edit,
+  BookOpen, Wallet, TrendingUp, CircleDollarSign
 } from 'lucide-react';
 
 export default function CustomersScreen({ 
   permanentCustomers, 
   onRefreshCustomers,
   activeSubTab = 'permanent',
-  setActiveSubTab 
+  setActiveSubTab,
+  onOpenLedger
 }) {
   const { lang, t } = useLanguage();
   const [subTab, setSubTab] = useState(activeSubTab || 'permanent'); // 'permanent' | 'walkin'
@@ -196,6 +198,13 @@ export default function CustomersScreen({
 
   const frequentWalkinsCount = walkinCustomers.filter((w) => w.visit_count >= 3).length;
 
+  const totalOutstanding = permanentCustomers.reduce(
+    (sum, c) => sum + Math.max(0, Number(c.outstanding) || 0),
+    0
+  );
+  const customersWithDues = permanentCustomers.filter((c) => Number(c.outstanding) > 0).length;
+  const customersWithAdvance = permanentCustomers.filter((c) => Number(c.outstanding) < 0).length;
+
   return (
     <div className="space-y-5">
 
@@ -281,6 +290,45 @@ export default function CustomersScreen({
         </div>
       </div>
 
+      {/* Ledger summary strip (permanent customers only) */}
+      {subTab === 'permanent' && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="rounded-2xl bg-gradient-to-br from-red-50 via-amber-50 to-white p-4 ring-1 ring-red-200/70 shadow-sm flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-red-500">{t('outstandingTotal')}</p>
+              <p className="mt-1 text-xl font-black text-red-700 tabular-nums">
+                ₹{totalOutstanding.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-white/80 ring-1 ring-red-200 text-red-500 flex items-center justify-center shrink-0">
+              <Wallet className="w-5 h-5" />
+            </div>
+          </div>
+
+          <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200 shadow-sm flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">{t('dueAmount')}</p>
+              <p className="mt-1 text-xl font-black text-slate-900 tabular-nums">{customersWithDues}</p>
+              <p className="text-[10px] font-semibold text-slate-400">{t('tabPermanent')}</p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-amber-50 ring-1 ring-amber-200 text-amber-600 flex items-center justify-center shrink-0">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+          </div>
+
+          <div className="rounded-2xl bg-white p-4 ring-1 ring-slate-200 shadow-sm flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">{t('advanceAmount')}</p>
+              <p className="mt-1 text-xl font-black text-emerald-700 tabular-nums">{customersWithAdvance}</p>
+              <p className="text-[10px] font-semibold text-slate-400">{t('settled')}</p>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 ring-1 ring-emerald-200 text-emerald-700 flex items-center justify-center shrink-0">
+              <CircleDollarSign className="w-5 h-5" />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Tab 1: Permanent Customers */}
       {subTab === 'permanent' && (
         <div className="bg-white rounded-2xl shadow-sm shadow-slate-200/60 ring-1 ring-slate-900/5 border border-slate-200/80 overflow-hidden">
@@ -294,13 +342,14 @@ export default function CustomersScreen({
                   <th className="py-3.5 px-4">{t('phone')}</th>
                   <th className="py-3.5 px-4">{t('address')}</th>
                   <th className="py-3.5 px-4 text-right">Registered</th>
-                  <th className="py-3.5 px-4 text-center w-28">{t('actions')}</th>
+                  <th className="py-3.5 px-4 text-right">{t('outstanding')}</th>
+                  <th className="py-3.5 px-4 text-center w-36">{t('actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredPermanent.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-14 text-center">
+                    <td colSpan={8} className="py-14 text-center">
                       <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 mb-3">
                         <Users className="w-6 h-6" />
                       </div>
@@ -356,8 +405,41 @@ export default function CustomersScreen({
                       <td className="py-3.5 px-4 text-right font-mono text-xs text-slate-500">
                         {cust.created_at ? new Date(cust.created_at).toLocaleDateString() : '—'}
                       </td>
+                      <td className="py-3.5 px-4 text-right">
+                        {(() => {
+                          const due = Number(cust.outstanding) || 0;
+                          if (due > 0) {
+                            return (
+                              <span className="inline-flex items-center gap-1 rounded-lg bg-red-50 px-2.5 py-1 text-xs font-black text-red-700 ring-1 ring-red-200 tabular-nums">
+                                ₹{due.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                            );
+                          }
+                          if (due < 0) {
+                            return (
+                              <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-200 tabular-nums">
+                                {t('advanceAmount')} ₹{Math.abs(due).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className="inline-flex items-center rounded-lg bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-500">
+                              {t('settled')}
+                            </span>
+                          );
+                        })()}
+                      </td>
                       <td className="py-3.5 px-4 text-center">
                         <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => onOpenLedger && onOpenLedger(cust)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-2 text-[11px] font-bold text-white bg-gradient-to-r from-[#156b46] to-emerald-800 hover:from-[#0e4f33] hover:to-emerald-900 rounded-lg shadow-sm shadow-emerald-900/15 transition-all"
+                            title={t('viewLedger')}
+                          >
+                            <BookOpen className="w-3.5 h-3.5" />
+                            <span>{t('ledgerAction')}</span>
+                          </button>
                           <button
                             type="button"
                             onClick={() => handleOpenEdit(cust)}

@@ -267,8 +267,20 @@ export default function BillsHistoryScreen({ onSelectBillForPrint }) {
                     </td>
 
                     {/* Grand Total */}
-                    <td className="py-3.5 px-4 text-right font-mono font-black text-sm text-slate-900">
-                      ₹{Number(b.grand_total).toFixed(2)}
+                    <td className="py-3.5 px-4 text-right font-mono">
+                      <div className="font-black text-sm text-slate-900">
+                        ₹{Number(b.grand_total).toFixed(2)}
+                      </div>
+                      {b.status !== 'cancelled' && Number(b.balance_due) > 0 && (
+                        <div className="mt-0.5 text-[10px] font-bold text-red-600">
+                          {t('balanceDue')}: ₹{Number(b.balance_due).toFixed(2)}
+                        </div>
+                      )}
+                      {b.status !== 'cancelled' && Number(b.balance_due) <= 0 && (
+                        <div className="mt-0.5 text-[10px] font-bold text-emerald-600">
+                          {t('paidInFull')}
+                        </div>
+                      )}
                     </td>
                     <td className="py-3.5 px-4 text-center">
                       <div className="flex gap-2 justify-center">
