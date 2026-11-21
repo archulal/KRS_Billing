@@ -85,6 +85,13 @@ export default function BillingScreen({
     };
   };
 
+  // The very first row is only a placeholder: the first quick-add click
+  // fills it, while every later click always appends a fresh line item.
+  const createInitialRow = () => ({
+    ...createEmptyRow(bananaTypes.length > 0 ? bananaTypes[0] : null),
+    isInitialPlaceholder: true
+  });
+
   const [items, setItems] = useState([]);
   const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -115,7 +122,7 @@ export default function BillingScreen({
   // Initialize with 1 empty row once varieties load
   useEffect(() => {
     if (bananaTypes.length > 0 && items.length === 0) {
-      setItems([createEmptyRow(bananaTypes[0])]);
+      setItems([createInitialRow()]);
     }
   }, [bananaTypes]);
 
@@ -145,7 +152,7 @@ export default function BillingScreen({
   const handleRowChange = (index, field, value) => {
     setItems((prevItems) => {
       const next = [...prevItems];
-      let row = { ...next[index], [field]: value };
+      let row = { ...next[index], [field]: value, isInitialPlaceholder: false };
 
       // If variety changed, auto-fill default rate and stem waste
       if (field === 'banana_type_id') {
@@ -168,30 +175,16 @@ export default function BillingScreen({
 
   const handleQuickSelectVariety = (variety) => {
     setItems((prevItems) => {
-      if (prevItems.length === 0) {
-        return [createEmptyRow(variety)];
-      }
-      const lastIndex = prevItems.length - 1;
-      const lastRow = prevItems[lastIndex];
-      // If last row has no gross weight entered yet, just update its variety
-      if (!lastRow.gross_weight_kg || parseFloat(lastRow.gross_weight_kg) === 0) {
-        const next = [...prevItems];
-        next[lastIndex] = recalculateRow({
-          ...lastRow,
-          banana_type_id: variety.id,
-          waste_per_bunch_kg: variety.default_stem_waste_per_bunch_kg,
-          rate_per_kg: variety.default_rate_per_kg,
-        });
-        return next;
-      }
-      // Otherwise append a new row with this variety
-      return [...prevItems, createEmptyRow(variety)];
+      // Replace the untouched placeholder row, but never overwrite a row the
+      // user has already started — every click adds a fresh line item.
+      const rows = prevItems.filter((row) => !row.isInitialPlaceholder);
+      return [...rows, createEmptyRow(variety)];
     });
   };
 
   const handleRemoveRow = (index) => {
     if (items.length <= 1) {
-      setItems([createEmptyRow(bananaTypes[0])]);
+      setItems([createInitialRow()]);
       return;
     }
     setItems((prev) => prev.filter((_, i) => i !== index));
@@ -199,7 +192,7 @@ export default function BillingScreen({
 
   const handleClearBill = () => {
     if (window.confirm(lang === 'ml' ? 'ബിൽ വിവരങ്ങൾ മായ്ക്കണമെന്നുണ്ടോ?' : 'Clear all items in this bill?')) {
-      setItems([createEmptyRow(bananaTypes[0])]);
+      setItems([createInitialRow()]);
       setCustomerType('walkin');
       setSelectedPermanentCustomer(null);
       setCustomerSearchQuery('');
@@ -295,7 +288,7 @@ export default function BillingScreen({
 
       const createdBill = await res.json();
       
-      setItems([createEmptyRow(bananaTypes[0])]);
+      setItems([createInitialRow()]);
       setCustomerType('walkin');
       setSelectedPermanentCustomer(null);
       setIsWalkInModalOpen(false);
